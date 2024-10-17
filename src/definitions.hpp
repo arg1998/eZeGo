@@ -7,9 +7,11 @@ to properly operate and compile for multiple platforms
 
 #pragma once
 
+#include "configs.hpp"
+
 
 //----------------------------------------------------------------
-// Primitive type defintions
+#pragma region "Primitive type defintions"
 //----------------------------------------------------------------
 
 
@@ -32,14 +34,18 @@ using f64   = double;
 // Boolean 
 using b8    = bool;
 
+#pragma endregion
 
 
+//----------------------------------------------------------------
+#pragma region "mandatory type assertions"
 // defining static assertion
 #if defined(__clang__) || defined(__gcc__)
     #define STATIC_ASSERT _Static_assert
 #else
     #define STATIC_ASSERT static_assert
 #endif
+
 
 
 
@@ -56,23 +62,34 @@ STATIC_ASSERT(sizeof(s64)   == 8, "Expected i64 to be 8 bytes.");
 
 STATIC_ASSERT(sizeof(f32)   == 4, "Expected f32 to be 4 bytes.");
 STATIC_ASSERT(sizeof(f64)   == 8, "Expected f64 to be 8 bytes.");
-
-
-
+#pragma endregion // mandatory type assertions
 
 
 //----------------------------------------------------------------
-// Architecture detection
+#pragma region "Detect Build type (debug/release)"
+//----------------------------------------------------------------
+#if defined(NDEBUG)
+    // Anything that is not a DEBUG build: Release, MinSizeRel, RelWithDebInfo
+    #define EZ_RELEASE_BUILD
+#else
+    #define EZ_DEBUG_BUILD
+#endif
+#pragma endregion
+
+
+//----------------------------------------------------------------
+#pragma region "Architecture detection"
 //----------------------------------------------------------------
 #if defined(__x86_64__) || defined(_M_X64) || defined(__aarch64__)
     #define EZ_PLATFORM_64BIT 1
 #else
     #error "Only 64-bit architectures are supported."
 #endif
+#pragma endregion
 
 
 //----------------------------------------------------------------
-// Compiler detection
+#pragma region "Compiler detection"
 //----------------------------------------------------------------
 #if defined(__clang__)
     #define EZ_COMPILER_CLANG
@@ -81,9 +98,10 @@ STATIC_ASSERT(sizeof(f64)   == 8, "Expected f64 to be 8 bytes.");
 #else
     #error "Unsupported compiler. Only Clang and MSVC are supported."
 #endif
+#pragma endregion
 
 //----------------------------------------------------------------
-// Platform/OS detection
+#pragma region "Platform/OS detection"
 //----------------------------------------------------------------
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(_WIN64)
     #define EZ_PLATFORM_WINDOWS 1
@@ -116,3 +134,4 @@ STATIC_ASSERT(sizeof(f64)   == 8, "Expected f64 to be 8 bytes.");
     #error "Unknown platform!"
 #endif
 
+#pragma endregion
