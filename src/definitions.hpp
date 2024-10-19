@@ -1,3 +1,5 @@
+#pragma once
+
 /*
 
 This file contains the type definitions, platform flags and other necessary flags
@@ -5,7 +7,6 @@ to properly operate and compile for multiple platforms
 
 */
 
-#pragma once
 
 #include "configs.hpp"
 

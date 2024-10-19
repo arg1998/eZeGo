@@ -1,3 +1,5 @@
+#pragma once
+
 /*
     This file contains all the compile configurations and flags 
 */
