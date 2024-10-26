@@ -136,3 +136,9 @@ STATIC_ASSERT(sizeof(f64)   == 8, "Expected f64 to be 8 bytes.");
 #endif
 
 #pragma endregion
+
+//----------------------------------------------------------------
+#pragma region "Function attributes"
+//----------------------------------------------------------------
+
+#define EZ_NO_DISCARD [[nodiscard]]
