@@ -1,7 +1,7 @@
 #include "logger.hpp"
 #include "core/assertion/assertions.hpp"
+#include "core/platform/platform.hpp"
 
-#include <iostream>
 #include <cstdarg>
 
 
@@ -17,20 +17,23 @@ void logOutout(LogLevel log_level, const std::string message, const char *_file,
     va_list args {};
     va_start(args, _line);
 
-    char messageBuffer[EZ_CONFIG_LOG_BUFFER_SIZE] = {};
-    vsnprintf(messageBuffer, sizeof(messageBuffer), message.c_str(), args);
+    char variaticArgsBuffer[EZ_CONFIG_LOG_BUFFER_SIZE] = {};
+    vsnprintf(variaticArgsBuffer, sizeof(variaticArgsBuffer), message.c_str(), args);
 
     va_end(args);
+
+    char messageBufffer[EZ_CONFIG_LOG_BUFFER_SIZE] = {};
+    sprintf(messageBufffer, "[%s]: %s <%s:%d>\n", level_strings[log_level], variaticArgsBuffer, _file, _line);
 
     //TODO:(Argosta): implement a platform-specific colored output mechanism when we have a platform system in place
     #if defined(EZ_CONFIG_LOG_TO_STD_ERR) && (EZ_CONFIG_LOG_TO_STD_ERR)
         if (log_level == EZ_LOG_LEVEL_FATAL || log_level == EZ_LOG_LEVEL_ERROR) {
-            std::cerr << "[" << level_strings[log_level] << "]: " << messageBuffer << " <" << _file << ":L" << _line << ">" << std::endl;
+            platformWriteConsoleError(messageBufffer, log_level);
         } else {
-            std::cout << "[" << level_strings[log_level] << "]: " << messageBuffer << " <" << _file << ":L" << _line << ">" << std::endl;
+            platformWriteConsoleOutput(messageBufffer, log_level);
         }
     #else
-        std::cout << "[" << level_strings[log_level] << "]: " << messageBuffer << " <" << _file << ":L" << _line << ">" << std::endl;
+        platformWriteConsoleOutput(messageBufffer, log_level);
     #endif
 }
 
