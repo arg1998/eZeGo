@@ -6,7 +6,13 @@
 
     #include <Windows.h>
     
+    inline PlatformOsType getPlatformOSType(){
+        return PlatformOsType::EZ_OS_WINDOWS;
+    }
 
+    inline const char* getPlatformOsTypeString(){
+        return "Windows";
+    }
 
     b8 initPlatform(){
 
@@ -14,7 +20,7 @@
     }
     void shutdownPlatform(){}
 
-    EZ_NO_DISCARD void* platformAllocateMemory(s32 size, b8 is_aligned){
+    EZ_NO_DISCARD void* platformAllocateMemory(u64 size){
         return malloc(size);
     }
     void platformFreeMemory(void* buffer) {
