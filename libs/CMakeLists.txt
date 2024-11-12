@@ -37,8 +37,6 @@ target_link_libraries(IMGUI PUBLIC ${OPENGL_LIBRARIES})
 add_subdirectory(glfw EXCLUDE_FROM_ALL)
 target_include_directories(IMGUI PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/glfw/include)
 
-# ------------------- fmt -------------------
-add_subdirectory(fmt)
 
 
 

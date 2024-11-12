@@ -8,6 +8,3 @@
 [submodule "libs/rtmidi"]
 	path = libs/rtmidi
 	url = https://github.com/thestk/rtmidi.git
-[submodule "libs/fmt"]
-	path = libs/fmt
-	url = https://github.com/fmtlib/fmt.git

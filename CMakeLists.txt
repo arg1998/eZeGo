@@ -30,6 +30,3 @@ target_link_libraries(eZeGo PRIVATE glfw)
 
 # link rtmidi library
 target_link_libraries(eZeGo PRIVATE rtmidi)
-
-# link fmt library
-target_link_libraries(eZeGo PRIVATE fmt::fmt)
