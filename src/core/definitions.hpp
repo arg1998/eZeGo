@@ -124,13 +124,21 @@ STATIC_ASSERT(sizeof(f64)   == 8, "Expected f64 to be 8 bytes.");
     #define EZ_PLATFORM_POSIX 1
 
 #elif defined(__APPLE__)
-     #include <TargetConditionals.h>
+    #include <TargetConditionals.h>
     #if TARGET_OS_MAC
         #define EZ_PLATFORM_MACOS 1
+
+        #if defined(__arm64__) || defined(__aarch64__) || (defined(TARGET_CPU_ARM64) && TARGET_CPU_ARM64)
+            // Apple Silicon (M Series)
+            #define EZ_PLATFORM_APPLE_SILICON 1
+        #else
+            // Intel-based Mac
+            #define EZ_PLATFORM_APPLE_INTEL 1
+        #endif
+
     #else
         #error "Unsupported Apple platform."
     #endif
-
 #else
     #error "Unknown platform!"
 #endif
