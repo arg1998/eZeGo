@@ -1,7 +1,7 @@
 #pragma once
 
 
-#include "definitions.hpp"
+#include "core/definitions.hpp"
 
 #include <string>
 
@@ -17,7 +17,7 @@ enum LogLevel {
 
 b8 initLoggingSystem();
 void shutdownLoggingSystem(); 
-void logOutout(LogLevel log_level, const std::string message, const char *_file, s32 _line, ...);
+void logOutout(LogLevel log_level, const std::string& message, const char *_file, s32 _line, ...);
 
 
 #ifdef EZ_PLATFORM_WINDOWS
@@ -53,7 +53,7 @@ void logOutout(LogLevel log_level, const std::string message, const char *_file,
 
     #ifdef EZ_DEBUG_BUILD
         #define EZ_LOG_DEBUG(msg, ...)  logOutout(EZ_LOG_LEVEL_DEBUG, msg, __FILENAME__, __LINE__, ##__VA_ARGS__)
-        #define EZ_LOG_TRACE(msg, ...)  logOutout(EZ_LOG_LEVEL_TRACE, msg, __FILENAME__, __LINE__, ##__VA_ARGS__)
+        #define EZ_LOG_TRACE()          logOutout(EZ_LOG_LEVEL_TRACE, __FUNCTION__, __FILENAME__, __LINE__)
     #else
         #define EZ_LOG_DEBUG(msg, ...)
         #define EZ_LOG_TRACE(msg, ...)

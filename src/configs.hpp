@@ -1,5 +1,15 @@
 #pragma once
 
+
+#ifndef EZ_APPLICATION_VERSION_STR
+    #define EZ_APPLICATION_VERSION_STR "0.0.0"
+#endif
+
+#ifndef EZ_APPLICATION_VERSION_NUM
+    #define EZ_APPLICATION_VERSION_NUM 0L
+#endif
+
+
 /*
     This file contains all the compile configurations and flags 
 */

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "definitions.hpp"
+#include "core/definitions.hpp"
 
 
 #if defined(EZ_COMPILER_CLANG)

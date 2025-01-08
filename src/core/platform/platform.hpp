@@ -1,7 +1,9 @@
 #pragma once 
 
-#include "definitions.hpp"
+#include "core/definitions.hpp"
 
+#include <GLFW/glfw3.h>
+#include <string>
 
 
 enum PlatformOsType {
@@ -10,8 +12,16 @@ enum PlatformOsType {
     EZ_OS_MAC       = 2
 };
 
+struct PlatformState {
+    std::string application_name;
+    std::string application_version_str;
+    GLFWwindow *main_window;
+    PlatformOsType os_type;
+};
 
-b8 initPlatform();
+
+PlatformState* initPlatform(const char* application_name);
+PlatformState* getPlatformState();
 void shutdownPlatform();
 
 EZ_NO_DISCARD void* platformAllocateMemory(u64 size);
