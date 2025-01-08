@@ -15,6 +15,11 @@
         return "Windows";
     }
 
+    // TODO(Argosta): replace main() function with WinMain() 
+    int main(){
+        PLATFORM_MAIN();
+    }
+
     static PlatformState platform_state;
     static b8 initialized = false;
 

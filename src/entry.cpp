@@ -1,9 +1,9 @@
 #include "core/definitions.hpp"
+#include "core/platform/platform.hpp"
 #include "core/logger/logger.hpp"
 #include "core/assertion/assertions.hpp"
-#include "core/platform/platform.hpp"
 
-int main() {
+void PLATFORM_MAIN() {
     EZ_LOG_TRACE();
 
     EZ_LOG_FATAL("fatal log %d %s", 123, " </fatal>");
@@ -38,5 +38,4 @@ int main() {
 
     shutdownPlatform();
 
-    return 0;
 }

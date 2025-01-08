@@ -19,6 +19,8 @@ struct PlatformState {
     PlatformOsType os_type;
 };
 
+/// @brief Platform independent main function. Only called by platform implementations.
+void PLATFORM_MAIN();
 
 PlatformState* initPlatform(const char* application_name);
 PlatformState* getPlatformState();
