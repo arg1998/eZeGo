@@ -5,6 +5,7 @@
 #if defined(EZ_PLATFORM_WINDOWS)
 
     #include <Windows.h>
+    #include "core/logger/logger.hpp"
     
     inline PlatformOsType getPlatformOSType(){
         return PlatformOsType::EZ_OS_WINDOWS;
@@ -14,11 +15,48 @@
         return "Windows";
     }
 
-    b8 initPlatform(){
+    static PlatformState platform_state;
+    static b8 initialized = false;
 
-        return true;
+    PlatformState* initPlatform(const char* application_name){
+        EZ_LOG_TRACE();
+
+
+        if(!glfwInit()){
+            EZ_LOG_FATAL("Faild to initialize GLFW");
+            return nullptr;
+        }
+
+        platform_state.application_name = application_name;
+        // TODO(Argosta): read the application settings from disk and populate glfw window width and height
+        // TODO(Argosta): window creation should go in the application layer. But for now we leave it here
+        platform_state.main_window = glfwCreateWindow(1000, 600, application_name, NULL, NULL);
+        if(!platform_state.main_window){
+            EZ_LOG_FATAL("Failed to create GLFW main window");
+            return nullptr;
+        }
+
+        platform_state.os_type = PlatformOsType::EZ_OS_WINDOWS;
+        platform_state.application_version_str = EZ_APPLICATION_VERSION_STR;
+
+        initialized = true;
+        return &platform_state;
     }
-    void shutdownPlatform(){}
+
+    PlatformState* getPlatformState(){
+        EZ_LOG_TRACE();
+        if(!initialized) {
+            EZ_LOG_WARN("Accessing platform state that is not initialized yet");
+            return nullptr;
+        }
+
+        return &platform_state;
+    }
+
+    void shutdownPlatform(){
+        EZ_LOG_TRACE();
+        glfwTerminate();
+    }
 
     EZ_NO_DISCARD void* platformAllocateMemory(u64 size){
         return malloc(size);
