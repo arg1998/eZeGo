@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.28)
 
 
 # ------------------- rtmidi -------------------
-add_subdirectory(rtmidi EXCLUDE_FROM_ALL)
+add_subdirectory(rtmidi)
 
 
 # ------------------- imgui -------------------
@@ -34,7 +34,7 @@ find_package(OpenGL REQUIRED)
 target_link_libraries(IMGUI PUBLIC ${OPENGL_LIBRARIES})
 
 # ------------------- glfw -------------------
-add_subdirectory(glfw EXCLUDE_FROM_ALL)
+add_subdirectory(glfw)
 target_include_directories(IMGUI PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/glfw/include)
 
 

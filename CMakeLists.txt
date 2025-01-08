@@ -12,14 +12,13 @@ set(EZEGO_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src/")
 file(GLOB_RECURSE EZEGO_CPP_FILES ${EZEGO_SRC_DIR}/*.cpp)
 
 add_executable(eZeGo ${EZEGO_CPP_FILES})
-
 target_include_directories(eZeGo PRIVATE ${EZEGO_SRC_DIR})
-
-
+target_compile_definitions(eZeGo PRIVATE EZ_APPLICATION_VERSION_STR="${CMAKE_PROJECT_VERSION}")
 set_target_properties(eZeGo PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/bin")
 
 
 # ------------------- Linking Libs ------------------- #
+set(BUILD_SHARED_LIBS OFF)
 add_subdirectory(libs)
 
 # Link the IMGUI library
