@@ -12,18 +12,20 @@ b8 initLoggingSystem() {
 void shutdownLoggingSystem() {}
 
 
-void logOutout(LogLevel log_level, const std::string message, const char *_file, s32 _line, ...) {
+void logOutout(LogLevel log_level, const std::string& message, const char *_file, s32 _line, ...) {
     const char *level_strings[6] = {"FATAL", "ERROR", "WARN ", "INFO ", "DEBUG", "TRACE"};
-    va_list args {};
-    va_start(args, _line);
-
-    char variaticArgsBuffer[EZ_CONFIG_LOG_BUFFER_SIZE] = {};
-    vsnprintf(variaticArgsBuffer, sizeof(variaticArgsBuffer), message.c_str(), args);
-
-    va_end(args);
-
+    
     char messageBufffer[EZ_CONFIG_LOG_BUFFER_SIZE] = {};
-    sprintf(messageBufffer, "[%s]: %s <%s:%d>\n", level_strings[log_level], variaticArgsBuffer, _file, _line);
+    if(log_level == EZ_LOG_LEVEL_TRACE){
+        sprintf(messageBufffer, "[%s]: %s() <%s:%d>\n", level_strings[log_level], message.c_str(), _file, _line);
+    }else {
+        va_list args {};
+        va_start(args, _line);
+        char variaticArgsBuffer[EZ_CONFIG_LOG_BUFFER_SIZE] = {};
+        vsnprintf(variaticArgsBuffer, sizeof(variaticArgsBuffer), message.c_str(), args);
+        va_end(args);
+        sprintf(messageBufffer, "[%s]: %s <%s:%d>\n", level_strings[log_level], variaticArgsBuffer, _file, _line);
+    }
 
     //TODO:(Argosta): implement a platform-specific colored output mechanism when we have a platform system in place
     #if defined(EZ_CONFIG_LOG_TO_STD_ERR) && (EZ_CONFIG_LOG_TO_STD_ERR)
