@@ -7,4 +7,3 @@
 # cmake 
 build/
 bin/*
-!bin/imgui.ini
