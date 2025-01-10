@@ -6,12 +6,12 @@
 #include <string>
 
 enum LogLevel {
-    EZ_LOG_LEVEL_FATAL  =   0,
-    EZ_LOG_LEVEL_ERROR  =   1,
-    EZ_LOG_LEVEL_WARN   =   2,
-    EZ_LOG_LEVEL_INFO   =   3,
-    EZ_LOG_LEVEL_DEBUG  =   4,
-    EZ_LOG_LEVEL_TRACE  =   5
+    EZ_LOG_LEVEL_FATAL  =   0, // => EZ_LOG_FATAL() : when a fatal error has occurred and the application must shutdown
+    EZ_LOG_LEVEL_ERROR  =   1, // => EZ_LOG_ERROR() : when an error has occurred but the application can recover and continue running
+    EZ_LOG_LEVEL_WARN   =   2, // => EZ_LOG_WARN()  : when application encounters unexpected environments and resources
+    EZ_LOG_LEVEL_INFO   =   3, // => EZ_LOG_INFO()  : for logging state, environment, context, etc. information
+    EZ_LOG_LEVEL_DEBUG  =   4, // => EZ_LOG_DEBUG() : AVAILABLE ONLY IN DEBUG BUILD. Used for print style debugging
+    EZ_LOG_LEVEL_TRACE  =   5  // => EZ_LOG_TRACE() : AVAILABLE ONLY IN DEBUG BUILD. Used at the beginning of function definition to trace function calls.  
 };
 
 
