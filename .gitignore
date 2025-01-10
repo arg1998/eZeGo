@@ -6,4 +6,5 @@
 
 # cmake 
 build/
-bin/
+bin/*
+!bin/imgui.ini

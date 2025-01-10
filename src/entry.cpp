@@ -129,8 +129,8 @@ void PLATFORM_MAIN() {
     ImGuiIO& io = ImGui::GetIO();
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;    // for docking
     
-    // io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;  // for multi-viewport support (rendering outside of the window frame)
-    // io.ConfigFlags |= ImGuiConfigFlags_DpiEnableScaleViewports;
+    io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;  // for multi-viewport support (rendering outside of the window frame)
+    io.ConfigFlags |= ImGuiConfigFlags_DpiEnableScaleViewports;
 
 
     ImGui::StyleColorsDark();
