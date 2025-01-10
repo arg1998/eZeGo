@@ -1,8 +1,6 @@
 #pragma once 
 
 #include "core/definitions.hpp"
-
-#include <GLFW/glfw3.h>
 #include <string>
 
 
@@ -13,10 +11,7 @@ enum PlatformOsType {
 };
 
 struct PlatformState {
-    std::string application_name;
-    std::string application_version_str;
-    GLFWwindow *main_window;
-    PlatformOsType os_type;
+    //TODO(Argosta): implement me
 };
 
 /// @brief Platform independent main function. Only called by platform implementations.
