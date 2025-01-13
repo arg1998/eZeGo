@@ -7,6 +7,8 @@
 #include <imgui_impl_opengl3.h>
 #include <imgui_impl_glfw.h>
 #include <GLFW/glfw3.h>
+#include <tracy/Tracy.hpp>
+
 
 static void glfw_error_callback(int error, const char* description) {
     EZ_LOG_ERROR("GLFW[%d]: %s", error, description);
@@ -96,6 +98,7 @@ void enableDarkTheme() {
 }
 
 void PLATFORM_MAIN() {
+    ZoneScoped;
     EZ_LOG_TRACE();
 
     EZ_LOG_FATAL("fatal log %d %s", 123, " </fatal>");
@@ -142,6 +145,7 @@ void PLATFORM_MAIN() {
 
     while (!glfwWindowShouldClose(main_window)) {
         glfwPollEvents();
+        ZoneScopedN("Game Loop");
 
         // Start the Dear ImGui frame
         ImGui_ImplOpenGL3_NewFrame();
@@ -174,6 +178,7 @@ void PLATFORM_MAIN() {
         }
 
         glfwSwapBuffers(main_window);
+        FrameMark;
     }
 
     shutdownPlatform();
