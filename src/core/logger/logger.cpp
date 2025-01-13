@@ -3,6 +3,7 @@
 #include "core/platform/platform.hpp"
 
 #include <cstdarg>
+#include <tracy/Tracy.hpp>
 
 
 b8 initLoggingSystem() {
@@ -18,7 +19,7 @@ void logOutout(LogLevel log_level, const std::string& message, const char *_file
     char messageBufffer[EZ_CONFIG_LOG_BUFFER_SIZE] = {};
     if(log_level == EZ_LOG_LEVEL_TRACE){
         sprintf(messageBufffer, "[%s]: %s() <%s:%d>\n", level_strings[log_level], message.c_str(), _file, _line);
-    }else {
+    } else {
         va_list args {};
         va_start(args, _line);
         char variaticArgsBuffer[EZ_CONFIG_LOG_BUFFER_SIZE] = {};
@@ -27,7 +28,21 @@ void logOutout(LogLevel log_level, const std::string& message, const char *_file
         sprintf(messageBufffer, "[%s]: %s <%s:%d>\n", level_strings[log_level], variaticArgsBuffer, _file, _line);
     }
 
-    platformWriteConsoleOutput(messageBufffer, log_level);
+    // Send all logging data to Tracy Profiler if enabled
+    #ifdef TRACY_ENABLE
+        static const u32 TRACY_COLORS[6] = {
+            0xFF0000, // FATAL      (Red) 
+            0xFF4D00, // Error      (Orange)
+            0xFFFF00, // Warning    (Yellow)
+            0x88E788, // Info       (Green),
+            0x90D5FF, // Debug      (Blue),
+            0xACADA5  // Trace      (Gray)
+        };
+        TracyMessageC(messageBufffer, strlen(messageBufffer), TRACY_COLORS[log_level]);
+    #else
+        // Otherwise print log messages using the platform standard output
+        platformWriteConsoleOutput(messageBufffer, log_level);
+    #endif
 
 }
 
