@@ -5,6 +5,9 @@ project(eZeGo VERSION 0.0.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 
+# Define custom build type for Tracy Profiler
+set(CMAKE_CONFIGURATION_TYPES "Debug;Release;RelWithDebInfo;RelWithTracyProfiler" CACHE STRING "Available build types" FORCE)
+
 # set the project source code directory
 set(EZEGO_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src/")
 
@@ -29,3 +32,28 @@ target_link_libraries(eZeGo PRIVATE glfw)
 
 # link rtmidi library
 target_link_libraries(eZeGo PRIVATE rtmidi)
+
+
+# ------------------------ Conditional Build for Profiling ---------------------------
+
+# Set RelWithTracyProfiler build type settings
+if(CMAKE_BUILD_TYPE STREQUAL "RelWithTracyProfiler")
+    set(CMAKE_CXX_FLAGS_RELWITHTRACYPROFILER "${CMAKE_CXX_FLAGS_RELEASE}")
+    set(CMAKE_EXE_LINKER_FLAGS_RELWITHTRACYPROFILER "${CMAKE_EXE_LINKER_FLAGS_RELEASE}")
+    set(CMAKE_SHARED_LINKER_FLAGS_RELWITHTRACYPROFILER "${CMAKE_SHARED_LINKER_FLAGS_RELEASE}")
+
+    # Enable Tracy options and add Tracy dependency
+    option(TRACY_ENABLE "Enable Tracy Profiler" ON)
+    option(TRACY_ON_DEMAND "Enable Tracy On-Demand Mode" ON)
+else()
+    # Disable Tracy options
+    option(TRACY_ENABLE "Enable Tracy Profiler" OFF)
+    option(TRACY_ON_DEMAND "Enable Tracy On-Demand Mode" OFF)
+endif()
+
+add_subdirectory(libs/tracy)
+
+# Disable Werror for TracyClient
+target_compile_options(TracyClient PRIVATE -Wno-error)
+target_link_libraries(eZeGo PRIVATE Tracy::TracyClient)
+
