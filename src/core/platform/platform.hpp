@@ -32,8 +32,6 @@ f64 platformGetClockTickMs();
 void platformSleep(const u64 ms);
 
 void platformWriteConsoleOutput(const char* message, u8 color);
-void platformWriteConsoleError(const char* message, u8 color); //FIXME(Argosta): delete this API. Update the config.h and logging API as well.
-
 
 inline const char* getPlatformOsTypeString();
 inline PlatformOsType getPlatformOSType();

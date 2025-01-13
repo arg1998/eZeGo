@@ -27,16 +27,8 @@ void logOutout(LogLevel log_level, const std::string& message, const char *_file
         sprintf(messageBufffer, "[%s]: %s <%s:%d>\n", level_strings[log_level], variaticArgsBuffer, _file, _line);
     }
 
-    //TODO:(Argosta): implement a platform-specific colored output mechanism when we have a platform system in place
-    #if defined(EZ_CONFIG_LOG_TO_STD_ERR) && (EZ_CONFIG_LOG_TO_STD_ERR)
-        if (log_level == EZ_LOG_LEVEL_FATAL || log_level == EZ_LOG_LEVEL_ERROR) {
-            platformWriteConsoleError(messageBufffer, log_level);
-        } else {
-            platformWriteConsoleOutput(messageBufffer, log_level);
-        }
-    #else
-        platformWriteConsoleOutput(messageBufffer, log_level);
-    #endif
+    platformWriteConsoleOutput(messageBufffer, log_level);
+
 }
 
 void report_assertion_failure(const char *expression, const char* message, const char *file, s32 line){

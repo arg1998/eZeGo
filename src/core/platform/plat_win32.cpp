@@ -95,25 +95,4 @@
 
 
     }
-
-    void platformWriteConsoleError(const char* message, u8 color) {
-        static u8 levels[6] = {64, 4, 6, 2, 1, 8};
-        static CONSOLE_SCREEN_BUFFER_INFO console_info;
-        static WORD original_attributes;
-
-        HANDLE console_handle = GetStdHandle(STD_ERROR_HANDLE);
-
-        // get current console styles
-        if (GetConsoleScreenBufferInfo(console_handle, &console_info)) {
-            original_attributes = console_info.wAttributes;  
-        }
-        
-        SetConsoleTextAttribute(console_handle, levels[color]);
-        OutputDebugStringA(message);
-        LPDWORD numCharsWritten = 0;
-        WriteConsoleA(console_handle, message, strlen(message), numCharsWritten, 0);
-
-        SetConsoleTextAttribute(console_handle, original_attributes);
-    }
-
 #endif // defined(EZ_PLATFORM_WINDOWS)

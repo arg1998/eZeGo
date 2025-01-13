@@ -26,11 +26,9 @@
 // this size represent the number of ASCII characters
 #define EZ_CONFIG_LOG_BUFFER_SIZE           2048 * 10
 
-// whether log FATAL and ERROR to std::err stream or not. 
-#define EZ_CONFIG_LOG_TO_STD_ERR            false
 
-// whether to spwan a separate console/terminal while running the application
-#define EZ_CONFIG_CONSOLE_ENABLED           false
+// whether to spwan a separate console/terminal while running the GUI application
+#define EZ_CONFIG_CONSOLE_ENABLED           false //TODO(Argosta): implement me 
 
 // whether the log system should output filename only or file name + absolute path
 #define EZ_CONFIG_LOG_FILE_ABSOLUTE_PATH    false
