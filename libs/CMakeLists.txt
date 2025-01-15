@@ -39,4 +39,8 @@ target_include_directories(IMGUI PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/glfw/includ
 
 
 
+# ------------------- Icon Font C++ Header (Font Awsome Icons) -------------------
+
+add_library(CppIconHeaders INTERFACE)
+target_include_directories(CppIconHeaders INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/IconFontCppHeaders)
 

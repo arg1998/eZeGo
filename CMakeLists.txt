@@ -33,6 +33,9 @@ target_link_libraries(eZeGo PRIVATE glfw)
 # link rtmidi library
 target_link_libraries(eZeGo PRIVATE rtmidi)
 
+# link Icon Header library
+target_link_libraries(eZeGo PRIVATE CppIconHeaders)
+
 
 # ------------------------ Conditional Build for Profiling ---------------------------
 
@@ -42,18 +45,16 @@ if(CMAKE_BUILD_TYPE STREQUAL "RelWithTracyProfiler")
     set(CMAKE_EXE_LINKER_FLAGS_RELWITHTRACYPROFILER "${CMAKE_EXE_LINKER_FLAGS_RELEASE}")
     set(CMAKE_SHARED_LINKER_FLAGS_RELWITHTRACYPROFILER "${CMAKE_SHARED_LINKER_FLAGS_RELEASE}")
 
-    # Enable Tracy options and add Tracy dependency
+
     option(TRACY_ENABLE "Enable Tracy Profiler" ON)
     option(TRACY_ON_DEMAND "Enable Tracy On-Demand Mode" ON)
 else()
-    # Disable Tracy options
     option(TRACY_ENABLE "Enable Tracy Profiler" OFF)
     option(TRACY_ON_DEMAND "Enable Tracy On-Demand Mode" OFF)
 endif()
 
 add_subdirectory(libs/tracy)
 
-# Disable Werror for TracyClient
-target_compile_options(TracyClient PRIVATE -Wno-error)
+target_compile_options(TracyClient PRIVATE -Wno-error) # Disable Werror for TracyClient
 target_link_libraries(eZeGo PRIVATE Tracy::TracyClient)
 
