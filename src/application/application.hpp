@@ -63,3 +63,5 @@ void applicationRenderFrame();
 bool shouldApplicationClose();
 
 void applicationProcessInput();
+
+void applicationLoadFonts();

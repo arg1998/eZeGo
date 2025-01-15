@@ -6,14 +6,20 @@
 #include <imgui_impl_glfw.h>
 #include <GLFW/glfw3.h>
 #include <tracy/Tracy.hpp>
+#include <IconsFontAwesome6.h>
+#include <filesystem>
+
+namespace fs = std::filesystem;
 
 static void glfw_error_callback(int error, const char* description) {
+    EZ_LOG_TRACE();
     EZ_LOG_ERROR("GLFW[%d]: %s", error, description);
 }
 
 static ezWindow mainWindow;
 
 void applicationEnableDarkTheme() {
+    EZ_LOG_TRACE();
     // TODO(Argosta): read this from a file
     ImVec4* colors = ImGui::GetStyle().Colors;
     colors[ImGuiCol_Text] = ImVec4(1.00f, 1.00f, 1.00f, 1.00f);
@@ -98,6 +104,7 @@ void applicationEnableDarkTheme() {
 }
 
 void initApplication() {
+    EZ_LOG_TRACE();
     mainWindow.height = 720;
     mainWindow.width = 1280;
     mainWindow.windowTitle = "eZeGo";
@@ -113,6 +120,7 @@ void initApplication() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_TRUE);
 
     mainWindow.window = glfwCreateWindow(mainWindow.width, mainWindow.height, mainWindow.windowTitle.c_str(), NULL, NULL);
 
@@ -188,4 +196,40 @@ void applicationProcessInput() {
         mainWindow.state = ezWindowState::EZ_WINDOW_CLOSED;
     }
     glfwPollEvents();
+}
+
+void applicationLoadFonts() {
+    EZ_LOG_TRACE();
+    ImGuiIO& io = ImGui::GetIO();
+    const f32 dpi_scale = io.DisplayFramebufferScale.y;
+    float font_size_px = 18.0f * dpi_scale;
+    
+    
+    ImFontConfig main_font_config;
+    main_font_config.OversampleH = 3;           
+    main_font_config.OversampleV = 3;           
+    main_font_config.RasterizerMultiply = 1.2f;
+    std::string main_font_path = (fs::current_path().parent_path() / "assets" / "fonts" / "OpenSans-Regular.ttf").u8string();
+    ImFont *main_font = io.Fonts->AddFontFromFileTTF(main_font_path.c_str(), font_size_px, &main_font_config, io.Fonts->GetGlyphRangesDefault());
+
+
+
+    ImFontConfig icon_font_config;
+    icon_font_config.MergeMode = true;
+    icon_font_config.PixelSnapH = true;
+    icon_font_config.GlyphMinAdvanceX = font_size_px;
+    icon_font_config.GlyphMaxAdvanceX = font_size_px;
+    const ImWchar icon_glyph_range[] = {ICON_MIN_FA, ICON_MAX_16_FA, 0};
+
+    std::string icon_font_path_regular = (fs::current_path().parent_path() / "assets" / "fonts" / "fa-regular-400.ttf").u8string();
+    ImFont *icon_font_regular = io.Fonts->AddFontFromFileTTF(icon_font_path_regular.c_str(), font_size_px, &icon_font_config, icon_glyph_range);
+    if(icon_font_regular == nullptr){
+        EZ_LOG_ERROR("Failed to load \"%s\" icon font", icon_font_path_regular.c_str());
+    }
+
+    std::string icon_font_path_solid = (fs::current_path().parent_path() / "assets" / "fonts" / "fa-solid-400.ttf").u8string();
+    ImFont *icon_font_solid = io.Fonts->AddFontFromFileTTF(icon_font_path_regular.c_str(), font_size_px, &icon_font_config, icon_glyph_range);
+    if(icon_font_solid == nullptr){
+        EZ_LOG_ERROR("Failed to load \"%s\" icon font", icon_font_path_solid.c_str());
+    }
 }
