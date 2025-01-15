@@ -121,9 +121,4 @@
         fflush(stdout);
     }
 
-    void platformWriteConsoleError(const char* message, u8 color) {
-        //TODO(Argosta): we will remove the separate error stream! let this be here for a while.
-        platformWriteConsoleOutput(message, color);
-    }
-
 #endif // defined(EZ_PLATFORM_MACOS)

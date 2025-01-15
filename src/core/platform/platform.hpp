@@ -1,8 +1,6 @@
 #pragma once 
 
 #include "core/definitions.hpp"
-
-#include <GLFW/glfw3.h>
 #include <string>
 
 
@@ -13,10 +11,7 @@ enum PlatformOsType {
 };
 
 struct PlatformState {
-    std::string application_name;
-    std::string application_version_str;
-    GLFWwindow *main_window;
-    PlatformOsType os_type;
+    //TODO(Argosta): implement me
 };
 
 /// @brief Platform independent main function. Only called by platform implementations.
@@ -37,8 +32,6 @@ f64 platformGetClockTickMs();
 void platformSleep(const u64 ms);
 
 void platformWriteConsoleOutput(const char* message, u8 color);
-void platformWriteConsoleError(const char* message, u8 color); //FIXME(Argosta): delete this API. Update the config.h and logging API as well.
-
 
 inline const char* getPlatformOsTypeString();
 inline PlatformOsType getPlatformOSType();
