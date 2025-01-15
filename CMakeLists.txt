@@ -5,6 +5,8 @@ project(eZeGo VERSION 0.0.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 
+# Find Boost libraries
+find_package(Boost REQUIRED)
 # set the project source code directory
 set(EZEGO_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src/")
 
@@ -29,3 +31,5 @@ target_link_libraries(eZeGo PRIVATE glfw)
 
 # link rtmidi library
 target_link_libraries(eZeGo PRIVATE rtmidi)
+
+target_include_directories(eZeGo PRIVATE ${Boost_INCLUDE_DIRS})

@@ -2,7 +2,7 @@
 #include "core/platform/platform.hpp"
 #include "core/logger/logger.hpp"
 #include "core/assertion/assertions.hpp"
-
+#include "core/serial/SerialInterface.hpp"
 void PLATFORM_MAIN() {
     EZ_LOG_TRACE();
 
@@ -14,6 +14,19 @@ void PLATFORM_MAIN() {
 
     EZ_ASSERT(1 == 1);
     EZ_ASSERT_MSG(1 == 1, "why 1 is not equal to 0?");
+
+    SerialPortConfig config;
+    config.port_name = "/dev/tty.usbmodem11303"; // Replace with your device path (e.g., /dev/tty.usbserial-XXXXX)
+    config.baud_rate = 115200;
+    config.character_size = 8;
+    config.stop_bits = 0; // One stop bit
+    config.parity = 0;    // No parity
+
+    // TODO: Farid added for testing
+    initiliazeSerialIO();
+    openIOService(config);
+    runBenchmarkIO(config, 512, 1);
+    shutdownSerialIO();
 
     PlatformState *plat_state;
 

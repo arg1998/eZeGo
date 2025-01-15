@@ -108,12 +108,12 @@
     void platformWriteConsoleOutput(const char* message, u8 color) {
 
         static const u8* ansiColors[] = {
-            "\x1b[37;41m", // white on red background
-            "\x1b[31m",    // red
-            "\x1b[33m",    // yellow
-            "\x1b[32m",    // green
-            "\x1b[34m",    // blue
-            "\x1b[90m"     // gray (bright black)
+            (const u8 *)"\x1b[37;41m", // white on red background
+            (const u8 *)"\x1b[31m",    // red
+            (const u8 *)"\x1b[33m",    // yellow
+            (const u8 *)"\x1b[32m",    // green
+            (const u8 *)"\x1b[34m",    // blue
+            (const u8 *)"\x1b[90m"     // gray (bright black)
         };
 
         // Print the color code, then the message, then reset
