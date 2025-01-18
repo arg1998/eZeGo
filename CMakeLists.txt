@@ -5,8 +5,6 @@ project(eZeGo VERSION 0.0.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 
-# Find Boost libraries
-find_package(Boost REQUIRED)
 # Define custom build type for Tracy Profiler
 set(CMAKE_CONFIGURATION_TYPES "Debug;Release;RelWithDebInfo;RelWithTracyProfiler" CACHE STRING "Available build types" FORCE)
 
@@ -35,7 +33,14 @@ target_link_libraries(eZeGo PRIVATE glfw)
 # link rtmidi library
 target_link_libraries(eZeGo PRIVATE rtmidi)
 
+# Find Boost libraries
+if(POLICY CMP0167)
+  cmake_policy(SET CMP0167 NEW)
+endif()
+find_package(Boost REQUIRED system)
 target_include_directories(eZeGo PRIVATE ${Boost_INCLUDE_DIRS})
+target_link_libraries(eZeGo PRIVATE ${Boost_LIBRARIES})
+
 # link Icon Header library
 target_link_libraries(eZeGo PRIVATE CppIconHeaders)
 
