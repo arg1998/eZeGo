@@ -1,6 +1,8 @@
 #include "core/definitions.hpp"
 
 #include <string>
+#include <vector>
+
 struct SerialPortInfo {
     std::string port_name;
     std::string description;
