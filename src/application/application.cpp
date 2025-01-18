@@ -1,12 +1,12 @@
 #include "application.hpp"
 #include "core/logger/logger.hpp"
+#include "application/fonts/Fonts.hpp"
 
 #include <imgui.h>
 #include <imgui_impl_opengl3.h>
 #include <imgui_impl_glfw.h>
 #include <GLFW/glfw3.h>
 #include <tracy/Tracy.hpp>
-#include <IconsFontAwesome6.h>
 #include <filesystem>
 
 namespace fs = std::filesystem;
@@ -202,7 +202,8 @@ void applicationLoadFonts() {
     EZ_LOG_TRACE();
     ImGuiIO& io = ImGui::GetIO();
     const f32 dpi_scale = io.DisplayFramebufferScale.y;
-    float font_size_px = 18.0f * dpi_scale;
+    f32 font_size_px = 18.0f * dpi_scale;
+    const f32 icon_font_size = font_size_px;
     
     
     ImFontConfig main_font_config;
@@ -217,19 +218,24 @@ void applicationLoadFonts() {
     ImFontConfig icon_font_config;
     icon_font_config.MergeMode = true;
     icon_font_config.PixelSnapH = true;
-    icon_font_config.GlyphMinAdvanceX = font_size_px;
-    icon_font_config.GlyphMaxAdvanceX = font_size_px;
-    const ImWchar icon_glyph_range[] = {ICON_MIN_FA, ICON_MAX_16_FA, 0};
+    icon_font_config.GlyphMinAdvanceX = icon_font_size;
+    icon_font_config.GlyphMaxAdvanceX = icon_font_size;
+    icon_font_config.GlyphOffset.y = font_size_px * 0.25; //FIXME(Arogosta): fix this magic number later
+    const ImWchar icon_glyph_range_md[] = {ICON_MIN_MD, ICON_MAX_16_MD, 0};
 
-    std::string icon_font_path_regular = (fs::current_path().parent_path() / "assets" / "fonts" / "fa-regular-400.ttf").u8string();
-    ImFont *icon_font_regular = io.Fonts->AddFontFromFileTTF(icon_font_path_regular.c_str(), font_size_px, &icon_font_config, icon_glyph_range);
+    std::string icon_font_path_regular = (fs::current_path().parent_path() / "assets" / "fonts" / FONT_ICON_FILE_NAME_MD).u8string();
+    ImFont *icon_font_regular = io.Fonts->AddFontFromFileTTF(icon_font_path_regular.c_str(), icon_font_size, &icon_font_config, icon_glyph_range_md);
     if(icon_font_regular == nullptr){
         EZ_LOG_ERROR("Failed to load \"%s\" icon font", icon_font_path_regular.c_str());
     }
 
-    std::string icon_font_path_solid = (fs::current_path().parent_path() / "assets" / "fonts" / "fa-solid-400.ttf").u8string();
-    ImFont *icon_font_solid = io.Fonts->AddFontFromFileTTF(icon_font_path_regular.c_str(), font_size_px, &icon_font_config, icon_glyph_range);
+
+    const ImWchar icon_glyph_range_lce[] = {ICON_MIN_LC, ICON_MAX_LC, 0};
+    std::string icon_font_path_solid = (fs::current_path().parent_path() / "assets" / "fonts" / FONT_ICON_FILE_NAME_LC).u8string();
+    ImFont *icon_font_solid = io.Fonts->AddFontFromFileTTF(icon_font_path_solid.c_str(), icon_font_size, &icon_font_config, icon_glyph_range_lce);
     if(icon_font_solid == nullptr){
         EZ_LOG_ERROR("Failed to load \"%s\" icon font", icon_font_path_solid.c_str());
     }
+
+    io.Fonts->Build();
 }
