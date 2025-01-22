@@ -150,3 +150,16 @@ STATIC_ASSERT(sizeof(f64)   == 8, "Expected f64 to be 8 bytes.");
 //----------------------------------------------------------------
 
 #define EZ_NO_DISCARD [[nodiscard]]
+#define EZ_LIKELY(x)   __builtin_expect(!!(x), true)
+#define EZ_UNLIKELY(x) __builtin_expect(!!(x), false)
+
+#pragma endregion
+
+//----------------------------------------------------------------
+#pragma region "Utility Macros"
+//----------------------------------------------------------------
+
+#define EZ_STRINGIFY(x) #x
+#define EZ_UNIQUE_STR(str) str "_" EZ_STRINGIFY(__COUNTER__)
+
+#pragma endregion
