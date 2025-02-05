@@ -159,6 +159,9 @@ STATIC_ASSERT(sizeof(f64)   == 8, "Expected f64 to be 8 bytes.");
 #pragma region "Utility Macros"
 //----------------------------------------------------------------
 
+
+#include <cstdlib> //TODO(Argosta): use MSVC/Clang compilers debug trap mechanism instead of std::abort()
+#define EZ_DEBUG_BREAK() std::abort()
 #define EZ_STRINGIFY(x) #x
 #define EZ_UNIQUE_STR(str) str "_" EZ_STRINGIFY(__COUNTER__)
 
