@@ -1,6 +1,7 @@
 #include "application.hpp"
 #include "core/logger/logger.hpp"
-#include "application/fonts/Fonts.hpp"
+#include "core/actions/commands.hpp"
+#include "application/fonts/fonts.hpp"
 
 #include <imgui.h>
 #include <imgui_impl_opengl3.h>
@@ -141,6 +142,9 @@ void initApplication() {
     // Setup Platform/Renderer backends
     ImGui_ImplGlfw_InitForOpenGL(mainWindow.window, true);
     ImGui_ImplOpenGL3_Init(GLSL_VERSION);
+
+    initLoggingSystem();
+    initCommandSystem();
 }
 
 void applicationBeginFrame() {
@@ -150,6 +154,7 @@ void applicationBeginFrame() {
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 }
+
 void applicationEndFrame() {
     ZoneScopedN("End Frame Generation");
     int display_w, display_h;
@@ -196,6 +201,8 @@ void applicationProcessInput() {
         mainWindow.state = ezWindowState::EZ_WINDOW_CLOSED;
     }
     glfwPollEvents();
+
+    getCommandRegistry()->processInputCommands();
 }
 
 void applicationLoadFonts() {
@@ -204,36 +211,32 @@ void applicationLoadFonts() {
     const f32 dpi_scale = io.DisplayFramebufferScale.y;
     f32 font_size_px = 18.0f * dpi_scale;
     const f32 icon_font_size = font_size_px;
-    
-    
+
     ImFontConfig main_font_config;
-    main_font_config.OversampleH = 3;           
-    main_font_config.OversampleV = 3;           
+    main_font_config.OversampleH = 3;
+    main_font_config.OversampleV = 3;
     main_font_config.RasterizerMultiply = 1.2f;
     std::string main_font_path = (fs::current_path().parent_path() / "assets" / "fonts" / "OpenSans-Regular.ttf").u8string();
-    ImFont *main_font = io.Fonts->AddFontFromFileTTF(main_font_path.c_str(), font_size_px, &main_font_config, io.Fonts->GetGlyphRangesDefault());
-
-
+    ImFont* main_font = io.Fonts->AddFontFromFileTTF(main_font_path.c_str(), font_size_px, &main_font_config, io.Fonts->GetGlyphRangesDefault());
 
     ImFontConfig icon_font_config;
     icon_font_config.MergeMode = true;
     icon_font_config.PixelSnapH = true;
     icon_font_config.GlyphMinAdvanceX = icon_font_size;
     icon_font_config.GlyphMaxAdvanceX = icon_font_size;
-    icon_font_config.GlyphOffset.y = font_size_px * 0.25; //FIXME(Arogosta): fix this magic number later
+    icon_font_config.GlyphOffset.y = font_size_px * 0.25;  // FIXME(Arogosta): fix this magic number later
     const ImWchar icon_glyph_range_md[] = {ICON_MIN_MD, ICON_MAX_16_MD, 0};
 
     std::string icon_font_path_regular = (fs::current_path().parent_path() / "assets" / "fonts" / FONT_ICON_FILE_NAME_MD).u8string();
-    ImFont *icon_font_regular = io.Fonts->AddFontFromFileTTF(icon_font_path_regular.c_str(), icon_font_size, &icon_font_config, icon_glyph_range_md);
-    if(icon_font_regular == nullptr){
+    ImFont* icon_font_regular = io.Fonts->AddFontFromFileTTF(icon_font_path_regular.c_str(), icon_font_size, &icon_font_config, icon_glyph_range_md);
+    if (icon_font_regular == nullptr) {
         EZ_LOG_ERROR("Failed to load \"%s\" icon font", icon_font_path_regular.c_str());
     }
 
-
     const ImWchar icon_glyph_range_lce[] = {ICON_MIN_LC, ICON_MAX_LC, 0};
     std::string icon_font_path_solid = (fs::current_path().parent_path() / "assets" / "fonts" / FONT_ICON_FILE_NAME_LC).u8string();
-    ImFont *icon_font_solid = io.Fonts->AddFontFromFileTTF(icon_font_path_solid.c_str(), icon_font_size, &icon_font_config, icon_glyph_range_lce);
-    if(icon_font_solid == nullptr){
+    ImFont* icon_font_solid = io.Fonts->AddFontFromFileTTF(icon_font_path_solid.c_str(), icon_font_size, &icon_font_config, icon_glyph_range_lce);
+    if (icon_font_solid == nullptr) {
         EZ_LOG_ERROR("Failed to load \"%s\" icon font", icon_font_path_solid.c_str());
     }
 
