@@ -14,10 +14,20 @@ set(EZEGO_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src/")
 # collect all the .cpp files recursively
 file(GLOB_RECURSE EZEGO_CPP_FILES ${EZEGO_SRC_DIR}/*.cpp)
 
+# ------------------- Download the json cpp ------------------- # This is not working for MACOS
+# include(FetchContent)
+# FetchContent_Declare(
+#     json
+#     URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.hpp
+# )
+# FetchContent_MakeAvailable(json)
+find_package(nlohmann_json REQUIRED)
+
 add_executable(eZeGo ${EZEGO_CPP_FILES})
 target_include_directories(eZeGo PRIVATE ${EZEGO_SRC_DIR})
 target_compile_definitions(eZeGo PRIVATE EZ_APPLICATION_VERSION_STR="${CMAKE_PROJECT_VERSION}")
 set_target_properties(eZeGo PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/bin")
+
 
 
 # ------------------- Linking Libs ------------------- #
@@ -66,3 +76,4 @@ add_subdirectory(libs/tracy)
 target_compile_options(TracyClient PRIVATE -Wno-error) # Disable Werror for TracyClient
 target_link_libraries(eZeGo PRIVATE Tracy::TracyClient)
 
+target_link_libraries(eZeGo PRIVATE nlohmann_json::nlohmann_json)
