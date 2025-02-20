@@ -44,3 +44,7 @@ target_include_directories(IMGUI PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/glfw/includ
 add_library(CppIconHeaders INTERFACE)
 target_include_directories(CppIconHeaders INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/IconFontCppHeaders)
 
+
+
+# ------------------- json -------------------
+add_subdirectory(json)
