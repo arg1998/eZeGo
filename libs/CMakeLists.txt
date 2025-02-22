@@ -40,7 +40,36 @@ target_include_directories(IMGUI PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/glfw/includ
 
 
 # ------------------- Icon Font C++ Header (Font Awsome Icons) -------------------
-
 add_library(CppIconHeaders INTERFACE)
 target_include_directories(CppIconHeaders INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/IconFontCppHeaders)
+
+
+
+# ------------------- Boost -------------------
+if(POLICY CMP0167)
+  cmake_policy(SET CMP0167 NEW)
+endif()
+find_package(Boost REQUIRED)
+target_include_directories(eZeGo PRIVATE ${Boost_INCLUDE_DIRS})
+
+
+
+
+# ------------------- CONDITIONAL: Tracy Client-------------------
+# Set RelWithTracyProfiler build type settings
+if(CMAKE_BUILD_TYPE STREQUAL "RelWithTracyProfiler")
+    set(CMAKE_CXX_FLAGS_RELWITHTRACYPROFILER "${CMAKE_CXX_FLAGS_RELEASE}")
+    set(CMAKE_EXE_LINKER_FLAGS_RELWITHTRACYPROFILER "${CMAKE_EXE_LINKER_FLAGS_RELEASE}")
+    set(CMAKE_SHARED_LINKER_FLAGS_RELWITHTRACYPROFILER "${CMAKE_SHARED_LINKER_FLAGS_RELEASE}")
+
+
+    option(TRACY_ENABLE "Enable Tracy Profiler" ON)
+    option(TRACY_ON_DEMAND "Enable Tracy On-Demand Mode" ON)
+else()
+    option(TRACY_ENABLE "Enable Tracy Profiler" OFF)
+    option(TRACY_ON_DEMAND "Enable Tracy On-Demand Mode" OFF)
+endif()
+
+add_subdirectory(tracy)
+target_compile_options(TracyClient PRIVATE -Wno-error) # Disble Werror for TracyClienta
 

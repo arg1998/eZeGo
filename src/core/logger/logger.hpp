@@ -38,7 +38,7 @@ void logOutout(LogLevel log_level, const std::string& message, const char *_file
 
 #ifndef EZ_LOG_FATAL
     // TODO(Argosta): For Fatal logs, application must break. implement mechanisms for breaking, crash reporting, and log dumping
-    #define EZ_LOG_FATAL(msg, ...)  logOutout(EZ_LOG_LEVEL_FATAL, msg, __FILENAME__, __LINE__, ##__VA_ARGS__)
+    #define EZ_LOG_FATAL(msg, ...)  logOutout(EZ_LOG_LEVEL_FATAL, msg, __FILENAME__, __LINE__, ##__VA_ARGS__); EZ_DEBUG_BREAK()
 #endif
 
 #ifndef EZ_LOG_ERROR
