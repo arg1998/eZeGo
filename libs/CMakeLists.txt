@@ -45,6 +45,9 @@ target_include_directories(CppIconHeaders INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/
 
 
 
+# ------------------- json -------------------
+add_subdirectory(json)
+
 # ------------------- Boost -------------------
 if(POLICY CMP0167)
   cmake_policy(SET CMP0167 NEW)
