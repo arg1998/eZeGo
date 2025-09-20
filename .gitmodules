@@ -17,3 +17,6 @@
 [submodule "libs/json"]
 	path = libs/json
 	url = https://github.com/nlohmann/json.git
+[submodule "libs/function2"]
+	path = libs/function2
+	url = https://github.com/Naios/function2.git

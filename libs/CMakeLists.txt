@@ -6,7 +6,6 @@ add_subdirectory(rtmidi)
 
 
 # ------------------- imgui -------------------
-
 set(IMGUI_DIR ${CMAKE_CURRENT_SOURCE_DIR}/imgui)
 add_library(IMGUI STATIC)
 target_sources(IMGUI 
@@ -33,6 +32,8 @@ target_include_directories(IMGUI
 find_package(OpenGL REQUIRED)
 target_link_libraries(IMGUI PUBLIC ${OPENGL_LIBRARIES})
 
+
+
 # ------------------- glfw -------------------
 add_subdirectory(glfw)
 target_include_directories(IMGUI PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/glfw/include)
@@ -48,6 +49,8 @@ target_include_directories(CppIconHeaders INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/
 # ------------------- json -------------------
 add_subdirectory(json)
 
+
+
 # ------------------- Boost -------------------
 if(POLICY CMP0167)
   cmake_policy(SET CMP0167 NEW)
@@ -55,6 +58,9 @@ endif()
 find_package(Boost REQUIRED)
 target_include_directories(eZeGo PRIVATE ${Boost_INCLUDE_DIRS})
 
+
+# ---------------------- function2 --------------------------
+add_subdirectory(function2)
 
 
 

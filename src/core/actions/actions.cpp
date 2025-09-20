@@ -8,7 +8,6 @@
 static b8 initialized = false;
 static ActionHandler action_handlers[ACTION_TYPE_COUNT];
 
-static s32 head = -1, tail = -1, pos = -1;
 static RingStack<ActionRecord> action_history_undo(DEFAULT_ACTION_HISTORY_LENGHT);
 static RingStack<ActionRecord> action_history_redo(DEFAULT_ACTION_HISTORY_LENGHT);
 

@@ -45,4 +45,8 @@ target_link_libraries(eZeGo PRIVATE CppIconHeaders)
 # link tracy client
 target_link_libraries(eZeGo PRIVATE Tracy::TracyClient)
 
+# link json library
 target_link_libraries(eZeGo PRIVATE nlohmann_json::nlohmann_json)
+
+# link function2 library
+target_link_libraries(eZeGo PRIVATE function2)

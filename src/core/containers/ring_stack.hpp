@@ -14,11 +14,7 @@ class RingStack {
 
    public:
     RingStack(u32 capacity) {
-        this->_capacity = capacity;
-        this->_full = false;
-        this->_tail = 0;  // points to the oldest element
-        this->_head = 0;  // points to the next free slot
-        _buffer = new T[capacity];
+       resizeUnsafe(capacity);
     }
 
     void push(const T& value) {
@@ -71,5 +67,14 @@ class RingStack {
             return _head - _tail;
         }
         return _capacity - _tail + _head;
+    }
+
+    void resizeUnsafe(u32 new_capacity){
+        delete [] _buffer;
+        this->_capacity = new_capacity;
+        this->_full = false;
+        this->_tail = 0;  // points to the oldest element
+        this->_head = 0;  // points to the next free slot
+        _buffer = new T[new_capacity];
     }
 };

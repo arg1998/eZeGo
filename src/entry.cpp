@@ -4,30 +4,22 @@
 #include "application/application.hpp"
 #include "application/fonts/fonts.hpp"
 #include "core/actions/commands.hpp"
-#include "core/actions/actions.hpp"
 
 #include <imgui.h>
 #include <imgui_internal.h>
 #include <tracy/Tracy.hpp>
 
-void executeMyValue(const ActionRecord *action) {
-    (*action->payload.intChangeValue.target) = action->payload.intChangeValue.current_value;
-}
-
-void undoMyValue(const ActionRecord *action) {
-    (*action->payload.intChangeValue.target) = action->payload.intChangeValue.prev_value;
-}
+#include "core/actions/state.hpp"
 
 void PLATFORM_MAIN() {
     initApplication();
-    initActionManager();
     applicationLoadFonts();
 
     u64 frame_count = 0;
     b8 first_time = true;
     ImGuiID root_dock_node = 0;
     ImGuiID extra_page_root_dock_node = 0;
-    ImGuiViewport *viewport = ImGui::GetMainViewport();
+    ImGuiViewport* viewport = ImGui::GetMainViewport();
 
     auto commandRegistry = getCommandRegistry();
 
@@ -41,9 +33,10 @@ void PLATFORM_MAIN() {
     main_page_commands->bindCommand(undo_event);
     main_page_commands->bindCommand(redo_event);
 
-    int my_value = 0;
-
-    registerActionHandler(ActionType::ActionType_ChangeIntValue, executeMyValue, undoMyValue);
+    StateHistoryContext stateCtx(64);
+    TrackableState<s32> mValue(0);
+    bool extraPageMounted = false;
+    bool isWindowFocused = false;
 
     while (!shouldApplicationClose()) {
         ZoneScopedN("Main Loop");
@@ -87,43 +80,93 @@ void PLATFORM_MAIN() {
         }
 
         {
-            if (ImGui::Begin("Home")) {}
+            if (ImGui::Begin("Home")) {
+                static float myValue = 0.0f;  // Your state variable
+                if (ImGui::SliderFloat("My Slider", &myValue, 0.0f, 100.0f)) {
+                    // This is called continuously while dragging
+                    EZ_LOG_INFO("Dragging Slider");
+                }
+
+                // Check if the user has finished interacting
+                if (ImGui::IsItemDeactivatedAfterEdit()) {
+                    // Notify your state manager here
+                    EZ_LOG_WARN("Slider Deactivated");
+                }
+
+                static int currentItem = 0;
+                const char* items[] = {"Item 1", "Item 2", "Item 3"};
+                if (ImGui::BeginCombo("My Combo", items[currentItem])) {
+                    for (int i = 0; i < IM_ARRAYSIZE(items); i++) {
+                        bool isSelected = (currentItem == i);
+                        if (ImGui::Selectable(items[i], isSelected)) {
+                            currentItem = i;  // Update selection
+                        }
+
+                        if (isSelected)
+                            ImGui::SetItemDefaultFocus();
+                    }
+
+                    
+                if(ImGui::IsItemDeactivatedAfterEdit()){
+                    EZ_LOG_WARN("ComboBox Closed");
+
+                }
+                    ImGui::EndCombo();
+                    EZ_LOG_INFO("Combobox Open");
+                }
+
+
+                // Detect when the combo box closes
+                // if (!ImGui::IsPopupOpen("My Combo")) {
+                //     // Notify state manager (selection finalized)
+                //     EZ_LOG_WARN("ComboBox Closed");
+                // }
+
+
+            }
             ImGui::End();
 
-            if (ImGui::Begin("Design")) {}
+            if (ImGui::Begin("Design")) {
+            }
             ImGui::End();
 
-            if (ImGui::Begin("Edit")) {}
+            if (ImGui::Begin("Edit")) {
+            }
             ImGui::End();
 
             if (ImGui::Begin("Extra")) {
+                isWindowFocused = ImGui::IsWindowFocused(ImGuiFocusedFlags_ChildWindows | ImGuiFocusedFlags_DockHierarchy);
+                if (isWindowFocused && !extraPageMounted) {
+                    EZ_LOG_DEBUG("Extra Page ACTIVATED");
+                    extraPageMounted = true;
+
+                } else if (!isWindowFocused && extraPageMounted) {
+                    EZ_LOG_WARN("Extra Page DEACTIVATED");
+                    extraPageMounted = false;
+                }
+
                 ImGuiID id2 = ImGui::GetID("EXTRA_PAGE_ROOT_DOCK_NODE");
                 ImGui::DockSpace(extra_page_root_dock_node);
                 ImGui::Begin("Dummy");
-
                 if (ImGui::Button("Increment by 1") || main_page_commands->isCommandCommitted(add_event)) {
-                    ActionRecord action;
-                    action.type = ActionType::ActionType_ChangeIntValue;
-                    action.payload.intChangeValue.target = &my_value;
-                    action.payload.intChangeValue.prev_value = my_value;
-                    my_value++;
-                    action.payload.intChangeValue.current_value = my_value;
-                    addAction(&action);
-
+                    Action valueUpdateAction = mValue.setState(mValue.getState() + 1);
+                    stateCtx.add(valueUpdateAction);
                     EZ_LOG_INFO("ADD");
                 }
 
                 if (main_page_commands->isCommandCommitted(undo_event)) {
-                    undoAction();
+                    stateCtx.undoAction();
                     EZ_LOG_INFO("UNDO");
                 }
 
                 if (main_page_commands->isCommandInitated(redo_event)) {
-                    redoAction();
+                    stateCtx.redoAction();
                     EZ_LOG_INFO("REDO");
                 }
 
-                ImGui::Text("Value : %d", my_value); ImGui::SameLine(); ImGui::Text("   |   Press \"Ctrl + Z\" to Undo & \"Ctrl + Shift + Z\" to Redo the operations");
+                ImGui::Text("Value : %d", mValue.getState());
+                ImGui::SameLine();
+                ImGui::Text("   |   Press \"Ctrl + Z\" to Undo & \"Ctrl + Shift + Z\" to Redo the operations");
 
                 ImGui::End();
                 ImGui::ShowDemoWindow();
