@@ -1,0 +1,57 @@
+{
+  "schema": 1,
+  "note": "Single source of truth for third-party code and pinned dev tools. 'commit' is the pin; 'ref' is for humans. See specs/build-system.md B-7 and B-14, and docs/dependencies.md.",
+  "dependencies": [
+    {
+      "name": "imgui",
+      "version": "1.92.9b-docking",
+      "url": "https://github.com/ocornut/imgui.git",
+      "ref": "v1.92.9b-docking",
+      "commit": "b48d1afbe8ee8b238e2961dc363a949dd7304e23",
+      "license": "MIT",
+      "used_by": [
+        "app"
+      ],
+      "why": "Immediate-mode UI with docking and multi-viewport"
+    },
+    {
+      "name": "glfw",
+      "version": "3.4",
+      "url": "https://github.com/glfw/glfw.git",
+      "ref": "3.4",
+      "commit": "7b6aead9fb88b3623e3b3725ebb42670cbe4c579",
+      "license": "Zlib",
+      "used_by": [
+        "app"
+      ],
+      "why": "Native windows, input, GL context; custom allocator hook (glfwInitAllocator)"
+    },
+    {
+      "name": "tracy",
+      "version": "0.14.1",
+      "url": "https://github.com/wolfpld/tracy.git",
+      "ref": "v0.14.1",
+      "commit": "30997d5ca6bb632cc10807a1da8a6d3de0aeeb3c",
+      "license": "BSD-3-Clause",
+      "used_by": [
+        "profile",
+        "tools"
+      ],
+      "why": "Profiler client (profile builds only) and the matching profiler GUI/CLI tools; one pin keeps client and GUI protocol identical",
+      "prebuilt": {
+        "linux-x86_64": {
+          "url": "https://github.com/wolfpld/tracy/releases/download/v0.14.1/linux-0.14.1.zip",
+          "sha256": "4f57574337b206cac86758081ab21c37cf9c83fc12170d2e339e1f4ee94ff590"
+        },
+        "macos-arm64": {
+          "url": "https://github.com/wolfpld/tracy/releases/download/v0.14.1/macos-0.14.1.zip",
+          "sha256": "971e2d8a742a57dc081cb2e36cc6200d565be7555c39a2f6439f9d65e2b416cb"
+        },
+        "windows-x86_64": {
+          "url": "https://github.com/wolfpld/tracy/releases/download/v0.14.1/windows-0.14.1.zip",
+          "sha256": "f7499d74914aa3ba94a2c1ce72f36477d7b61d9d0f7c9790e05274c258c97fb5"
+        }
+      }
+    }
+  ]
+}

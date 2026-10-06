@@ -1,0 +1,98 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": { "major": 3, "minor": 28, "patch": 0 },
+  "configurePresets": [
+    {
+      "name": "_base",
+      "hidden": true,
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "toolchainFile": "${sourceDir}/cmake/toolchain.cmake",
+      "cacheVariables": { "CMAKE_EXPORT_COMPILE_COMMANDS": "ON" }
+    },
+    {
+      "name": "debug",
+      "displayName": "debug: assertions, all logs, unoptimized first-party code",
+      "inherits": "_base",
+      "cacheVariables": { "EZ_MODE": "debug", "CMAKE_BUILD_TYPE": "Debug" }
+    },
+    {
+      "name": "profile",
+      "displayName": "profile: release codegen + Tracy + memory instrumentation",
+      "inherits": "_base",
+      "cacheVariables": { "EZ_MODE": "profile", "CMAKE_BUILD_TYPE": "Release" }
+    },
+    {
+      "name": "release",
+      "displayName": "release: what ships",
+      "inherits": "_base",
+      "cacheVariables": { "EZ_MODE": "release", "CMAKE_BUILD_TYPE": "Release" }
+    },
+    {
+      "name": "asan",
+      "displayName": "asan: debug + Address/UB sanitizers",
+      "inherits": "_base",
+      "cacheVariables": { "EZ_MODE": "debug", "CMAKE_BUILD_TYPE": "Debug", "EZ_SANITIZE": "address;undefined" }
+    },
+    {
+      "name": "tsan",
+      "displayName": "tsan: debug + Thread sanitizer (not on Windows)",
+      "inherits": "_base",
+      "cacheVariables": { "EZ_MODE": "debug", "CMAKE_BUILD_TYPE": "Debug", "EZ_SANITIZE": "thread" },
+      "condition": { "type": "notEquals", "lhs": "${hostSystemName}", "rhs": "Windows" }
+    }
+  ],
+  "buildPresets": [
+    { "name": "debug", "configurePreset": "debug" },
+    { "name": "profile", "configurePreset": "profile" },
+    { "name": "release", "configurePreset": "release" },
+    { "name": "asan", "configurePreset": "asan" },
+    {
+      "name": "tsan", "configurePreset": "tsan",
+      "condition": { "type": "notEquals", "lhs": "${hostSystemName}", "rhs": "Windows" }
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "_base", "hidden": true,
+      "output": { "outputOnFailure": true },
+      "filter": { "exclude": { "label": "gpu" } },
+      "execution": { "noTestsAction": "error", "timeout": 120 }
+    },
+    { "name": "debug", "inherits": "_base", "configurePreset": "debug" },
+    { "name": "profile", "inherits": "_base", "configurePreset": "profile" },
+    { "name": "release", "inherits": "_base", "configurePreset": "release" },
+    { "name": "asan", "inherits": "_base", "configurePreset": "asan" },
+    {
+      "name": "tsan", "inherits": "_base", "configurePreset": "tsan",
+      "condition": { "type": "notEquals", "lhs": "${hostSystemName}", "rhs": "Windows" }
+    }
+  ],
+  "workflowPresets": [
+    {
+      "name": "debug",
+      "steps": [ { "type": "configure", "name": "debug" }, { "type": "build", "name": "debug" } ]
+    },
+    {
+      "name": "profile",
+      "steps": [ { "type": "configure", "name": "profile" }, { "type": "build", "name": "profile" } ]
+    },
+    {
+      "name": "release",
+      "steps": [ { "type": "configure", "name": "release" }, { "type": "build", "name": "release" } ]
+    },
+    {
+      "name": "asan",
+      "steps": [ { "type": "configure", "name": "asan" }, { "type": "build", "name": "asan" }, { "type": "test", "name": "asan" } ]
+    },
+    {
+      "name": "tsan",
+      "steps": [ { "type": "configure", "name": "tsan" }, { "type": "build", "name": "tsan" }, { "type": "test", "name": "tsan" } ]
+    },
+    {
+      "name": "check",
+      "displayName": "pre-merge gate: configure, build and test debug",
+      "steps": [ { "type": "configure", "name": "debug" }, { "type": "build", "name": "debug" }, { "type": "test", "name": "debug" } ]
+    }
+  ]
+}

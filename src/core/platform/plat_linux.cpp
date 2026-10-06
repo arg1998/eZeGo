@@ -1,40 +1,36 @@
 #include "platform.hpp"
 
 
-//TODO:(Argosta): implement macOS specific functions
 #if defined(EZ_PLATFORM_LINUX)
 
-    #include <stdlib.h>                 // malloc, free
+    #include <stdlib.h>                 // malloc, free, aligned_alloc
     #include <string.h>                 // memcpy, memset
     #include <stdio.h>                  // printf, etc.
-    #include <unistd.h>                 // usleep
+    #include <time.h>                   // clock_gettime
+    #include <unistd.h>                 // usleep, readlink
 
     #include "core/logger/logger.hpp"
-    
-    inline PlatformOsType getPlatformOSType(){
+
+    PlatformOsType getPlatformOSType(){
         return PlatformOsType::EZ_OS_LINUX;
     }
 
-    inline const char* getPlatformOsTypeString(){
-        return "macOS";
-    }
-
-    // TODO(Argosta): replace main() function with Linux main function
-    int main(){
-        PLATFORM_MAIN();
+    const char* getPlatformOsTypeString(){
+        return "Linux";
     }
 
     static PlatformState platform_state;
-    static b8 initialized = false;
 
     PlatformState* initPlatform(const char* application_name){
         EZ_LOG_TRACE();
+        (void)application_name;
+        platform_state.initialized = true;
         return &platform_state;
     }
 
     PlatformState* getPlatformState(){
         EZ_LOG_TRACE();
-        if(!initialized) {
+        if(!platform_state.initialized) {
             EZ_LOG_WARN("Accessing platform state that is not initialized yet");
             return nullptr;
         }
@@ -44,12 +40,21 @@
 
     void shutdownPlatform(){
         EZ_LOG_TRACE();
+        platform_state.initialized = false;
     }
 
     EZ_NO_DISCARD void* platformAllocateMemory(u64 size){
         return malloc(size);
     }
+    EZ_NO_DISCARD void* platformAllocateMemoryAligned(u64 size, u16 alignment){
+        // aligned_alloc requires size to be a multiple of alignment
+        u64 rounded = (size + alignment - 1) / alignment * alignment;
+        return aligned_alloc(alignment, rounded);
+    }
     void platformFreeMemory(void* buffer) {
+        free(buffer);
+    }
+    void platformFreeMemoryAligned(void* buffer) {
         free(buffer);
     }
     void platformCopyMemory(void* source, void* dest, u64 size){
@@ -62,33 +67,46 @@
         memset(buffer, value, size);
     }
 
-    f64 platformGetClockTickMs() {
-        EZ_LOG_TRACE();
-        // TODO(Argosta): implement this function
-        EZ_LOG_FATAL("Function not implemented for linux");
-        return 0.0;
+    u64 platformGetClockTickNs() {
+        timespec ts;
+        clock_gettime(CLOCK_MONOTONIC, &ts);
+        return (u64)ts.tv_sec * 1000000000ull + (u64)ts.tv_nsec;
     }
-    
+
+    f64 platformGetClockTickMs() {
+        return (f64)platformGetClockTickNs() / 1.0e6;
+    }
+
     void platformSleep(const u64 ms) {
         usleep((useconds_t)(ms * 1000));
     }
 
-    
+    const char* platformGetExecutableDir() {
+        static char dir[1024] = {};
+        if (dir[0] == '\0') {
+            ssize_t n = readlink("/proc/self/exe", dir, sizeof(dir) - 1);
+            if (n > 0) dir[n] = '\0';
+            char* slash = strrchr(dir, '/');
+            if (slash) *slash = '\0';
+        }
+        return dir;
+    }
 
     void platformWriteConsoleOutput(const char* message, u8 color) {
 
-        static const u8* ansiColors[] = {
-            (const u8 *)"\x1b[37;41m", // white on red background
-            (const u8 *)"\x1b[31m",    // red
-            (const u8 *)"\x1b[33m",    // yellow
-            (const u8 *)"\x1b[32m",    // green
-            (const u8 *)"\x1b[34m",    // blue
-            (const u8 *)"\x1b[90m"     // gray (bright black)
+        static const char* ansiColors[] = {
+            "\x1b[37;41m", // white on red background
+            "\x1b[31m",    // red
+            "\x1b[33m",    // yellow
+            "\x1b[32m",    // green
+            "\x1b[34m",    // blue
+            "\x1b[90m"     // gray (bright black)
         };
 
         // Print the color code, then the message, then reset
-        printf("%s%s\x1b[0m", ansiColors[color], message);
-        fflush(stdout);
+        FILE* out = color <= 2 ? stderr : stdout;
+        fprintf(out, "%s%s\x1b[0m", ansiColors[color], message);
+        fflush(out);
     }
 
-#endif // defined(EZ_PLATFORM_MACOS)
+#endif // defined(EZ_PLATFORM_LINUX)

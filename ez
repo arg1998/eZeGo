@@ -1,0 +1,39 @@
+#!/usr/bin/env sh
+# Optional launcher (B-4): short words for the canonical CMake commands. No logic lives here;
+# every line maps one-to-one onto a command you can type yourself.
+set -e
+cd "$(dirname "$0")"
+cmd=${1:-help}
+[ $# -gt 0 ] && shift
+
+case "$cmd" in
+  doctor)  exec cmake -P scripts/doctor.cmake "$@" ;;
+  init)    exec cmake -P scripts/init.cmake "$@" ;;
+  deps)    exec cmake -P scripts/deps.cmake "$@" ;;
+  tools)   exec cmake -P scripts/tools.cmake "$@" ;;
+  vscode)  exec cmake -P scripts/vscode.cmake "$@" ;;
+  build)   exec cmake --workflow --preset "${1:-debug}" ;;
+  test)    preset=${1:-debug}; [ $# -gt 0 ] && shift; exec ctest --preset "$preset" "$@" ;;
+  check)   exec cmake --workflow --preset check ;;
+  run)     preset=${1:-debug}; [ $# -gt 0 ] && shift; exec cmake -P scripts/run.cmake --preset="$preset" -- "$@" ;;
+  profile) exec cmake -P scripts/profile.cmake "$@" ;;
+  clean)   [ -n "$1" ] || { echo "usage: ./ez clean <preset>"; exit 2; }; exec cmake -E rm -rf "build/$1" ;;
+  help|-h|--help)
+    cat <<'EOF'
+usage: ./ez <command> [args]
+
+  doctor                 check this machine and the repo (read-only)
+  init  [--tools=...]    first-time setup: doctor, deps, tools, VS Code, configure debug
+  deps  [--check]        sync third_party/_src to dependencies.json (shallow, pinned)
+  tools [--tools=prebuilt|source|skip] [--force]   install pinned dev tools (Tracy)
+  vscode                 regenerate eZeGo.code-workspace
+  build [preset]         configure + build: debug (default) | profile | release | asan | tsan
+  test  [preset] [ctest args]   e.g. ./ez test debug -L unit
+  check                  pre-merge gate: build + test debug
+  run   [preset] [app args]     build, then run the app
+  profile [--capture=f.tracy] [-- app args]   build profile, open Tracy, run the app
+  clean <preset>         delete build/<preset>
+EOF
+    ;;
+  *) echo "unknown command '$cmd' (try ./ez help)"; exit 2 ;;
+esac

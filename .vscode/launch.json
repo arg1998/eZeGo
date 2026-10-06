@@ -1,0 +1,35 @@
+{
+  // Tracked, no machine paths. Pick the mode with the CMake Tools preset selector (status bar),
+  // pick the target with "CMake: Set Launch/Debug Target", then F5.
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug app (LLDB: Linux, macOS)",
+      "type": "lldb",
+      "request": "launch",
+      "program": "${command:cmake.launchTargetPath}",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "terminal": "console"
+    },
+    {
+      "name": "Debug app (Windows: MSVC debugger, reads PDBs)",
+      "type": "cppvsdbg",
+      "request": "launch",
+      "program": "${command:cmake.launchTargetPath}",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Run app + Tracy (select the 'profile' preset first)",
+      "type": "lldb",
+      "request": "launch",
+      "program": "${command:cmake.launchTargetPath}",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "preLaunchTask": "tracy: open GUI",
+      "terminal": "console"
+    }
+  ]
+}

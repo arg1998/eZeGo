@@ -1,25 +1,32 @@
 #include "application.hpp"
 #include "core/logger/logger.hpp"
-#include "core/actions/commands.hpp"
-#include "application/fonts/fonts.hpp"
+#include "core/platform/platform.hpp"
+#include "core/profiler/profiler.hpp"
 
-#include <imgui.h>
-#include <imgui_impl_opengl3.h>
-#include <imgui_impl_glfw.h>
 #include <GLFW/glfw3.h>
-#include <tracy/Tracy.hpp>
-#include <filesystem>
+#include <imgui.h>
+#include <imgui_impl_glfw.h>
+#include <imgui_impl_opengl3.h>
 
-namespace fs = std::filesystem;
+#include <cstdio>
 
 static void glfw_error_callback(int error, const char* description) {
-    EZ_LOG_TRACE();
     EZ_LOG_ERROR("GLFW[%d]: %s", error, description);
 }
 
 static ezWindow mainWindow;
 
-void applicationEnableDarkTheme() {
+// The few GL entry points the application calls itself, loaded through GLFW at runtime: no GL
+// headers or GL development package are needed to build (ImGui's backend has its own loader).
+using PfnGlViewport   = void (*)(int, int, int, int);
+using PfnGlClearColor = void (*)(float, float, float, float);
+using PfnGlClear      = void (*)(unsigned int);
+static PfnGlViewport   glViewportFn;
+static PfnGlClearColor glClearColorFn;
+static PfnGlClear      glClearFn;
+static constexpr unsigned int EZ_GL_COLOR_BUFFER_BIT = 0x00004000;
+
+static void applicationEnableDarkTheme() {
     EZ_LOG_TRACE();
     // TODO(Argosta): read this from a file
     ImVec4* colors = ImGui::GetStyle().Colors;
@@ -58,9 +65,9 @@ void applicationEnableDarkTheme() {
     colors[ImGuiCol_ResizeGripActive] = ImVec4(0.40f, 0.44f, 0.47f, 1.00f);
     colors[ImGuiCol_Tab] = ImVec4(0.00f, 0.00f, 0.00f, 0.52f);
     colors[ImGuiCol_TabHovered] = ImVec4(0.14f, 0.14f, 0.14f, 1.00f);
-    colors[ImGuiCol_TabActive] = ImVec4(0.20f, 0.20f, 0.20f, 0.36f);
-    colors[ImGuiCol_TabUnfocused] = ImVec4(0.00f, 0.00f, 0.00f, 0.52f);
-    colors[ImGuiCol_TabUnfocusedActive] = ImVec4(0.14f, 0.14f, 0.14f, 1.00f);
+    colors[ImGuiCol_TabSelected] = ImVec4(0.20f, 0.20f, 0.20f, 0.36f);
+    colors[ImGuiCol_TabDimmed] = ImVec4(0.00f, 0.00f, 0.00f, 0.52f);
+    colors[ImGuiCol_TabDimmedSelected] = ImVec4(0.14f, 0.14f, 0.14f, 1.00f);
     colors[ImGuiCol_DockingPreview] = ImVec4(0.33f, 0.67f, 0.86f, 1.00f);
     colors[ImGuiCol_DockingEmptyBg] = ImVec4(1.00f, 0.00f, 0.00f, 1.00f);
     colors[ImGuiCol_PlotLines] = ImVec4(1.00f, 0.00f, 0.00f, 1.00f);
@@ -74,7 +81,7 @@ void applicationEnableDarkTheme() {
     colors[ImGuiCol_TableRowBgAlt] = ImVec4(1.00f, 1.00f, 1.00f, 0.06f);
     colors[ImGuiCol_TextSelectedBg] = ImVec4(0.20f, 0.22f, 0.23f, 1.00f);
     colors[ImGuiCol_DragDropTarget] = ImVec4(0.33f, 0.67f, 0.86f, 1.00f);
-    colors[ImGuiCol_NavHighlight] = ImVec4(1.00f, 0.00f, 0.00f, 1.00f);
+    colors[ImGuiCol_NavCursor] = ImVec4(1.00f, 0.00f, 0.00f, 1.00f);
     colors[ImGuiCol_NavWindowingHighlight] = ImVec4(1.00f, 0.00f, 0.00f, 0.70f);
     colors[ImGuiCol_NavWindowingDimBg] = ImVec4(1.00f, 0.00f, 0.00f, 0.20f);
     colors[ImGuiCol_ModalWindowDimBg] = ImVec4(1.00f, 0.00f, 0.00f, 0.35f);
@@ -104,8 +111,9 @@ void applicationEnableDarkTheme() {
     style.TabRounding = 4;
 }
 
-void initApplication() {
+b8 initApplication() {
     EZ_LOG_TRACE();
+    EZ_PROFILE_FUNCTION();
     mainWindow.height = 720;
     mainWindow.width = 1280;
     mainWindow.windowTitle = "eZeGo";
@@ -115,66 +123,82 @@ void initApplication() {
 
     glfwSetErrorCallback(glfw_error_callback);
     if (!glfwInit()) {
-        EZ_LOG_FATAL("Failed to initialize GLFW");
+        EZ_LOG_ERROR("Failed to initialize GLFW");
+        return false;
     }
     const char* GLSL_VERSION = "#version 410";
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);   // required on macOS
     glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_TRUE);
 
-    mainWindow.window = glfwCreateWindow(mainWindow.width, mainWindow.height, mainWindow.windowTitle.c_str(), NULL, NULL);
+    mainWindow.window = glfwCreateWindow((int)mainWindow.width, (int)mainWindow.height, mainWindow.windowTitle, NULL, NULL);
+    if (!mainWindow.window) {
+        EZ_LOG_ERROR("Failed to create a window with an OpenGL 4.1 core context");
+        glfwTerminate();
+        return false;
+    }
 
     glfwMakeContextCurrent(mainWindow.window);
-    glfwSwapInterval(0);  // Enable vsync
+    glfwSwapInterval(1);  // Enable vsync
+    glViewportFn   = (PfnGlViewport)glfwGetProcAddress("glViewport");
+    glClearColorFn = (PfnGlClearColor)glfwGetProcAddress("glClearColor");
+    glClearFn      = (PfnGlClear)glfwGetProcAddress("glClear");
 
     IMGUI_CHECKVERSION();
-    ImGuiContext* imgui_ctx = ImGui::CreateContext();
+    ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO();
-    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;  // for docking
-
-    io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;          // for multi-viewport support (rendering outside of the window frame)
-    io.ConfigFlags |= ImGuiConfigFlags_DpiEnableScaleViewports;  // for
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;    // for docking
+    io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;  // for multi-viewport support (rendering outside of the window frame)
+    io.IniFilename = nullptr;                            // TODO(Argosta): decide where UI layout is persisted
 
     ImGui::StyleColorsDark();
     applicationEnableDarkTheme();
+    f32 dpi_scale = 1.0f;
+    glfwGetWindowContentScale(mainWindow.window, &dpi_scale, nullptr);
+    ImGui::GetStyle().ScaleAllSizes(dpi_scale);
+    ImGui::GetStyle().FontScaleDpi = dpi_scale;
 
     // Setup Platform/Renderer backends
     ImGui_ImplGlfw_InitForOpenGL(mainWindow.window, true);
     ImGui_ImplOpenGL3_Init(GLSL_VERSION);
 
-    initLoggingSystem();
-    initCommandSystem();
+    EZ_LOG_INFO("GLFW %s, window %ux%u, DPI scale %.2f", glfwGetVersionString(), mainWindow.width, mainWindow.height, dpi_scale);
+    return true;
+}
+
+void shutdownApplication() {
+    EZ_LOG_TRACE();
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
+    glfwDestroyWindow(mainWindow.window);
+    glfwTerminate();
 }
 
 void applicationBeginFrame() {
-    ZoneScopedN("Begin Frame Generation");
+    EZ_PROFILE_ZONE("Begin Frame Generation");
     // Start the Dear ImGui frame
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 }
 
-void applicationEndFrame() {
-    ZoneScopedN("End Frame Generation");
-    int display_w, display_h;
-    const ImVec4 clear_color = ImVec4(0.0f, 0.0f, 0.0f, 1.00f);
-    glfwGetFramebufferSize(mainWindow.window, &display_w, &display_h);
-    glViewport(0, 0, display_w, display_h);
-    glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
-    glClear(GL_COLOR_BUFFER_BIT);
-}
-
 void applicationRenderFrame() {
-    ZoneScopedN("Render Frame");
-    // Rendering
+    EZ_PROFILE_ZONE("Render Frame");
     ImGui::Render();
+
+    int display_w, display_h;
+    glfwGetFramebufferSize(mainWindow.window, &display_w, &display_h);
+    glViewportFn(0, 0, display_w, display_h);
+    glClearColorFn(0.0f, 0.0f, 0.0f, 1.0f);
+    glClearFn(EZ_GL_COLOR_BUFFER_BIT);
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
     // Multi-Viewport support (rendering outside the window frames)
     // Update and Render additional Platform Windows
-    // (Platform functions may change the current OpenGL context, so we save/restore it to make it easier to paste this code elsewhere.
-    //  For this specific demo app we could also call glfwMakeContextCurrent(window) directly)
+    // (Platform functions may change the current OpenGL context, so we save/restore it.)
     if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
         GLFWwindow* backup_current_context = glfwGetCurrentContext();
         ImGui::UpdatePlatformWindows();
@@ -189,8 +213,12 @@ bool shouldApplicationClose() {
     return mainWindow.state == ezWindowState::EZ_WINDOW_CLOSED;
 }
 
+void applicationRequestClose() {
+    glfwSetWindowShouldClose(mainWindow.window, GLFW_TRUE);
+}
+
 void applicationProcessInput() {
-    ZoneScopedN("Input Processing");
+    EZ_PROFILE_ZONE("Input Processing");
     if (glfwWindowShouldClose(mainWindow.window)) {
         // TODO(Argosta): prompt user if they want to close the application
         // to do this, uncoment the line bellow and check the window state in the
@@ -201,44 +229,21 @@ void applicationProcessInput() {
         mainWindow.state = ezWindowState::EZ_WINDOW_CLOSED;
     }
     glfwPollEvents();
-
-    getCommandRegistry()->processInputCommands();
 }
 
 void applicationLoadFonts() {
     EZ_LOG_TRACE();
     ImGuiIO& io = ImGui::GetIO();
-    const f32 dpi_scale = io.DisplayFramebufferScale.y;
-    f32 font_size_px = 18.0f * dpi_scale;
-    const f32 icon_font_size = font_size_px;
 
     ImFontConfig main_font_config;
     main_font_config.OversampleH = 3;
     main_font_config.OversampleV = 3;
     main_font_config.RasterizerMultiply = 1.2f;
-    std::string main_font_path = (fs::current_path().parent_path() / "assets" / "fonts" / "OpenSans-Regular.ttf").u8string();
-    ImFont* main_font = io.Fonts->AddFontFromFileTTF(main_font_path.c_str(), font_size_px, &main_font_config, io.Fonts->GetGlyphRangesDefault());
 
-    ImFontConfig icon_font_config;
-    icon_font_config.MergeMode = true;
-    icon_font_config.PixelSnapH = true;
-    icon_font_config.GlyphMinAdvanceX = icon_font_size;
-    icon_font_config.GlyphMaxAdvanceX = icon_font_size;
-    icon_font_config.GlyphOffset.y = font_size_px * 0.25;  // FIXME(Arogosta): fix this magic number later
-    const ImWchar icon_glyph_range_md[] = {ICON_MIN_MD, ICON_MAX_16_MD, 0};
-
-    std::string icon_font_path_regular = (fs::current_path().parent_path() / "assets" / "fonts" / FONT_ICON_FILE_NAME_MD).u8string();
-    ImFont* icon_font_regular = io.Fonts->AddFontFromFileTTF(icon_font_path_regular.c_str(), icon_font_size, &icon_font_config, icon_glyph_range_md);
-    if (icon_font_regular == nullptr) {
-        EZ_LOG_ERROR("Failed to load \"%s\" icon font", icon_font_path_regular.c_str());
+    // Assets are copied next to the executable by the build (src/application/CMakeLists.txt).
+    char main_font_path[1200];
+    snprintf(main_font_path, sizeof(main_font_path), "%s/assets/fonts/OpenSans-Regular.ttf", platformGetExecutableDir());
+    if (!io.Fonts->AddFontFromFileTTF(main_font_path, 18.0f, &main_font_config)) {
+        EZ_LOG_WARN("Failed to load \"%s\"; using the default font", main_font_path);
     }
-
-    const ImWchar icon_glyph_range_lce[] = {ICON_MIN_LC, ICON_MAX_LC, 0};
-    std::string icon_font_path_solid = (fs::current_path().parent_path() / "assets" / "fonts" / FONT_ICON_FILE_NAME_LC).u8string();
-    ImFont* icon_font_solid = io.Fonts->AddFontFromFileTTF(icon_font_path_solid.c_str(), icon_font_size, &icon_font_config, icon_glyph_range_lce);
-    if (icon_font_solid == nullptr) {
-        EZ_LOG_ERROR("Failed to load \"%s\" icon font", icon_font_path_solid.c_str());
-    }
-
-    io.Fonts->Build();
 }

@@ -1,0 +1,65 @@
+{
+  // Tracked: no machine-specific paths. ${config:ezego.*} values come from the generated
+  // eZeGo.code-workspace (run `init` or `cmake -P scripts/vscode.cmake`). Every task maps
+  // one-to-one onto a command you can type in a terminal (B-13).
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "ez: doctor",
+      "type": "process",
+      "command": "${config:ezego.cmake}",
+      "args": ["-P", "scripts/doctor.cmake"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": []
+    },
+    {
+      "label": "ez: init",
+      "type": "process",
+      "command": "${config:ezego.cmake}",
+      "args": ["-P", "scripts/init.cmake"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": []
+    },
+    {
+      "label": "ez: deps (sync to manifest)",
+      "type": "process",
+      "command": "${config:ezego.cmake}",
+      "args": ["-P", "scripts/deps.cmake"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": []
+    },
+    {
+      "label": "ez: tools (install pinned dev tools)",
+      "type": "process",
+      "command": "${config:ezego.cmake}",
+      "args": ["-P", "scripts/tools.cmake"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": []
+    },
+    {
+      "label": "ez: check (build + test debug)",
+      "type": "process",
+      "command": "${config:ezego.cmake}",
+      "args": ["--workflow", "--preset", "check"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": ["$gcc"],
+      "group": "test"
+    },
+    {
+      "label": "ez: profile (build profile, open Tracy, run)",
+      "type": "process",
+      "command": "${config:ezego.cmake}",
+      "args": ["-P", "scripts/profile.cmake"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": ["$gcc"]
+    },
+    {
+      "label": "tracy: open GUI",
+      "type": "process",
+      "command": "${config:ezego.cmake}",
+      "args": ["-P", "scripts/profile.cmake", "--gui-only"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": []
+    }
+  ]
+}

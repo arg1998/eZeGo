@@ -2,8 +2,6 @@
 
 #include "core/definitions.hpp"
 
-#include <string>
-
 //--------------------------------------------------------------------------------------------
 //                                   forward declrations
 //--------------------------------------------------------------------------------------------
@@ -42,7 +40,7 @@ struct ezWindow {
     u32 width;
     u32 height;
     ezWindowState state;
-    std::string windowTitle;
+    const char* windowTitle;
     ezWindow* parentWindow;
     ezWindow* childWindow;
     GLFWwindow* window;
@@ -52,15 +50,17 @@ struct ezWindow {
 //                                           API
 //--------------------------------------------------------------------------------------------
 
-void initApplication();
+b8 initApplication();
+
+void shutdownApplication();
 
 void applicationBeginFrame();
-
-void applicationEndFrame();
 
 void applicationRenderFrame();
 
 bool shouldApplicationClose();
+
+void applicationRequestClose();
 
 void applicationProcessInput();
 

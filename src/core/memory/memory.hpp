@@ -1,6 +1,9 @@
+#pragma once
+
 #include "core/definitions.hpp"
 
-
+// The memory choke point. Today it forwards to the platform allocator; tagging, arenas and
+// per-module statistics come with the memory-system design (specs/observability.md §4).
 
 /// @brief allocates memeory using the underlying platform allocator
 /// @param size number of bytes to allocate
@@ -10,13 +13,16 @@ EZ_NO_DISCARD void* ezAllocate(u64 size);
 /// @brief allocates aligned memeory using the underlying platform allocator
 /// @param size number of bytes to allocate
 /// @param alignment alignment value, typically is a power of 2 and greated than 1
-/// @return a block of freshly allocated aligned memory
+/// @return a block of freshly allocated aligned memory. Release it with ezFreeAligned().
 EZ_NO_DISCARD void* ezAllocateAligned(u64 size, u16 alignment);
 
 
 /// @brief free the memory using the platform deallocator
 /// @param buffer the memeory region that is being freed
 void ezFree(void* buffer);
+
+/// @brief free memory obtained from ezAllocateAligned()
+void ezFreeAligned(void* buffer);
 
 
 /// @brief sets and overwrites a memeory region with a value
