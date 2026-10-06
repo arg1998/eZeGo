@@ -1,7 +1,7 @@
 # eZeGo — Application Architecture
 
-> **Status:** Living document. Last updated 2026-06-05. Reflects what we know now; expected to be revised as the domain model and UX are detailed.
-> **Companions:** [`philosophy.md`](./philosophy.md) · [`threading-and-timing.md`](./threading-and-timing.md) · [`plugins.md`](./plugins.md) · source-of-intent: [`things I want.md`](./things%20I%20want.md)
+> **Status:** Living document. Last updated 2026-10-04. Reflects what we know now; expected to be revised as the domain model and UX are detailed.
+> **Companions:** [`philosophy.md`](./philosophy.md) · [`threading-and-timing.md`](./threading-and-timing.md) · [`plugins.md`](./plugins.md) · [`build-system.md`](./build-system.md) · [`linking.md`](./linking.md) · [`observability.md`](./observability.md) · [`ui-system.md`](./ui-system.md) · index: [`README.md`](./README.md) · source-of-intent: [`things I want.md`](./things%20I%20want.md)
 
 ---
 
@@ -149,26 +149,28 @@ Everything OS-specific sits behind a **capability-based** interface that *exploi
 
 ## 5. Build & toolchain model
 
-Goal: **self-maintaining, reproducible, minimal-friction builds** with `make`-level developer commands wrapping CMake + Ninja, and **a single dependency manifest replacing git submodules**.
+> **Proposed 2026-10-04.** The full design, with trade-offs, lives in [`build-system.md`](./build-system.md) and [`linking.md`](./linking.md). This section is a summary. Where it differs from the earlier `make` / `FetchContent` / `RelWithTracyProfiler` wording, those documents are the reference.
+
+Goal: **self-maintaining, reproducible, minimal-friction builds** — CMake + Ninja, a single dependency manifest replacing git submodules, and one-word commands that behave the same on all three platforms.
 
 ```mermaid
 graph TD
-    MANIFEST["deps manifest (name / version / url / branch / commit)"] --> INIT["make initialize"]
-    INIT --> FETCH["Fetch & pin deps (no submodules)"]
-    INIT --> TOOLS["Build dev tools (Tracy server / GUI)"]
-    INIT --> GEN["CMake + Ninja configure"]
-    GEN --> MODE{"Build mode"}
-    MODE --> DBG["Debug — assertions + logging"]
-    MODE --> PROF["RelWithTracyProfiler — Tracy + memory instrumentation"]
-    MODE --> RELW["RelWithDebInfo"]
-    MODE --> REL["Release — optimized, logging off"]
+    MANIFEST["dependencies.json (name / version / url / ref / commit / sha256)"] --> INIT["init"]
+    INIT --> DOCTOR["doctor: check system + repo, report fixes"]
+    INIT --> FETCH["Fetch & verify pinned deps (no submodules)"]
+    INIT --> TOOLS["Build dev tools (Tracy GUI, same pin)"]
+    INIT --> GEN["Configure a preset"]
+    GEN --> MODE{"Mode = preset with its own build tree"}
+    MODE --> DBG["debug — assertions + logging"]
+    MODE --> PROF["profile — release codegen + Tracy + memory instrumentation"]
+    MODE --> REL["release — optimized, symbols kept separately"]
 ```
 
-- **Dependency manifest** — one human-readable file lists every dependency with name, version, source URL, and **branch + pinned commit**. The branch is recorded for humans; **the commit is what the build pins** (reproducibility is incompatible with tracking a moving branch). Consumed by the build system (e.g. CMake `FetchContent` with pinned hashes) at `make initialize` time. *No git submodules.*
-- **Developer commands** are platform-aware (`make initialize`, build-mode switches, dev-tool builds); commands unsupported on a platform fail clearly.
-- **Build modes** map to intent: *dev/debug* (assertions, logging), *performance-profile* (`RelWithTracyProfiler` — Tracy zones + frame marks + memory instrumentation; **no global `malloc` hook** — instrument the memory system and inject allocators where 3rd-party libs allow), *release* (optimized, logging compiled out). Switching modes is a single command even if it forces a rebuild.
-- **Current vendored libs** (to migrate off submodules into the manifest): ImGui (docking), GLFW, RtMidi, Tracy, nlohmann/json, IconFontCppHeaders, function2. Boost is currently a `find_package` system dependency used only for serial — **a candidate for removal** under the minimal-deps philosophy.
-- **Vendor static vs dynamic linking: open.** Leaning static for the core (single-binary determinism/portability); plugins are dynamic by nature, which has implications for symbol visibility and runtime duplication.
+- **Dependency manifest** — one human-readable file lists every dependency with name, version, source URL, tag/branch and **pinned commit**. The tag or branch is recorded for humans; **the commit is what the build pins** (reproducibility is incompatible with tracking a moving branch). Fetched by an explicit step (`init` / `deps`); configure and build never touch the network. *No git submodules.*
+- **Developer commands** are plain CMake (`cmake -P scripts/<task>.cmake`, `cmake --workflow --preset <mode>`, `ctest --preset <mode>`) with an optional `ez` launcher. OS-specific work lives in `scripts/linux`, `scripts/macos`, `scripts/windows`; commands unsupported on a platform fail clearly.
+- **Build modes** are presets, each with its own build tree, so switching never requires clearing a cache: *debug* (assertions, logging), *profile* (release code generation plus Tracy zones, frame marks and memory instrumentation; **no global `malloc` hook outside this mode** — see [`observability.md`](./observability.md) §4), *release* (optimized, debug/trace logging compiled out).
+- **Current vendored libs** (to migrate off submodules into the manifest): ImGui (docking), GLFW, RtMidi, Tracy, nlohmann/json, IconFontCppHeaders, function2. Boost is currently a `find_package` system dependency used only for serial — **proposed for removal** under the minimal-deps philosophy.
+- **Linking: static** for everything built from source. Only OS, GPU, windowing and audio interfaces stay dynamic; plugins are the one first-class dynamic boundary, with isolation rules for symbol visibility and duplicated state. See [`linking.md`](./linking.md).
 
 ---
 
@@ -178,6 +180,7 @@ graph TD
 - **Audio** — playback + real-time analysis (FFT/beat/levels) on the audio thread. Library choice (**RtAudio** — sibling of vendored RtMidi — vs **miniaudio**) is open.
 - **Networking** — fast, non-blocking, multi-protocol (Art-Net/sACN and general transport). Stack is open; leaning a minimal UDP layer over Boost.Asio.
 - **Hardware service layer** — the integration tier between the abstract engine and physical devices. The **core knows only abstract, capability-tagged outputs**; the service layer owns device **discovery**, **capability negotiation**, **vendor-SDK orchestration** (e.g. `arduino-cli`, `esptool` as subprocess + filesystem + network work → worker pool), **compatibility checks**, and **firmware build/flash pipelines**. Each device class is effectively a **driver descriptor**: `{ discover, capabilities, build+flash, stream }`. This is also a natural plugin seam ("device packs" — see [`plugins.md`](./plugins.md) §4).
+- **UI system** — the application and plugins never call Dear ImGui; everything goes through `ez_ui`, an immediate-mode API in eZeGo's own vocabulary with three layers (widgets and layout, canvas, viewport). Viewports are render targets; scene and gizmo logic stays in the render and editor-tool systems. Design: [`ui-system.md`](./ui-system.md) *(proposed 2026-10-05)*.
 - **Themes** — dark themes only (light themes left to the community). A **single theme file** loaded at runtime alters colors and UI shapes as far as ImGui allows.
 
 ---
@@ -203,8 +206,8 @@ The headless constraint (engine core has no GPU/window/UI dependency) exists *sp
 ## 9. Assumptions & open questions (consolidated)
 
 - **C++ standard** (17 vs 20/23) — open.
-- **Vendor static vs dynamic linking** — open (leaning static core).
-- **Boost** — likely removed; replace serial/networking with lighter pieces — to confirm.
+- **Vendor static vs dynamic linking** — proposed: static; see [`linking.md`](./linking.md) (awaiting confirmation).
+- **Boost** — removal proposed ([`build-system.md`](./build-system.md) B-7); replace serial/networking with lighter pieces — to confirm.
 - **Audio library** (RtAudio vs miniaudio) — open.
 - **Networking stack** — open.
 - **Testing frameworks** — open.
@@ -213,7 +216,7 @@ The headless constraint (engine core has no GPU/window/UI dependency) exists *sp
 - **Content time-index** — seconds vs musical beats (lean: beats for music-ride content, seconds option for beginners) — open.
 - **Mixing mental model** — explicit layer stack (Resolume/Photoshop-like) vs a novel UX presentation — open.
 - **Per-attribute merge defaults** — HTP-intensity / LTP-color as default, blend-mode-overridable — to confirm.
-- **Novel UX specifics** — largely unspecified; will reshape Layer-1 decisions when detailed.
+- **Novel UX specifics** — largely unspecified; will reshape Layer-1 decisions when detailed. The UI widget vocabulary waits for them ([`ui-system.md`](./ui-system.md) U-8).
 - **GCC support** — currently blocked; softening is open.
 - **Serialization format** (JSON vs binary, versioning/migration) — open.
 - **Performance budgets** throughout — starting hypotheses, to be validated by measurement.

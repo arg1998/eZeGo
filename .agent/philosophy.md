@@ -1,8 +1,8 @@
 # eZeGo — Engineering Philosophy
 
-> **Status:** Living document. Last updated 2026-06-05.
+> **Status:** Living document. Last updated 2026-10-04.
 > **Source of intent:** [`things I want.md`](./things%20I%20want.md). This file distills that wishlist into the *ideology, metrics, and assessment rules* we hold ourselves to.
-> **Companions:** [`application-architecture.md`](./application-architecture.md) · [`threading-and-timing.md`](./threading-and-timing.md) · [`plugins.md`](./plugins.md)
+> **Companions:** [`application-architecture.md`](./application-architecture.md) · [`threading-and-timing.md`](./threading-and-timing.md) · [`plugins.md`](./plugins.md) · [`build-system.md`](./build-system.md) · [`linking.md`](./linking.md) · [`observability.md`](./observability.md) · index: [`README.md`](./README.md)
 
 ---
 
@@ -39,7 +39,7 @@ These are the non-negotiable defaults. The tone is **"justify the exception,"** 
 
 8. **Extensibility is first-class but coarse-grained at the boundary.** Plugins cross a C ABI at frame/event granularity, never per-fixture/per-sample, *precisely because* the boundary is an optimization barrier (the same reason we ban virtuals in the hot loop).
 
-9. **Reproducible, self-maintaining builds.** Minimal vendored dependencies, **a single dependency manifest** (name, version, source, branch/commit), no git submodules. `make`-level commands for developer experience over raw CMake invocations.
+9. **Reproducible, self-maintaining builds.** Minimal vendored dependencies, **a single dependency manifest** (name, version, source, branch/commit), no git submodules. One-word developer commands (CMake presets plus thin per-OS scripts) instead of hand-typed CMake invocations. Design: [`build-system.md`](./build-system.md) *(proposed 2026-10-04; replaces the earlier `make`-based idea)*.
 
 10. **MIT core; proprietary tech via plugins.** The application is MIT-licensed. The plugin system is the sanctioned path for closed-source / proprietary extensions.
 
@@ -89,8 +89,8 @@ The memory system (see [`application-architecture.md`](./application-architectur
 
 ### 3.6 Assessment cadence
 
-- **Deep dives:** the `RelWithTracyProfiler` build + Tracy (CPU zones, memory, frame marks).
-- **Always-on:** a lightweight in-app performance HUD (frame time, alloc/frame, memory by tag).
+- **Deep dives:** the `profile` build mode + Tracy (CPU zones, memory, frame marks). *(Was the custom `RelWithTracyProfiler` build type; see [`build-system.md`](./build-system.md) B-2/B-3.)*
+- **Always-on:** a lightweight in-app performance HUD (frame time, alloc/frame, memory by tag). Design: [`observability.md`](./observability.md).
 - **Gates (later):** CI performance regression checks. **No merge to `main` may regress frame-time p99 or introduce hot-path allocations** without an explicit, justified waiver.
 
 ---
@@ -125,7 +125,7 @@ These are deliberately *out of scope now* to keep us honest; each has a deferred
 > These are written down precisely so we don't mistake them for decisions.
 
 - **C++ standard:** currently C++17. Whether to move to C++20/23 (concepts, `std::span`, designated initializers, `<bit>`) is **open**.
-- **Vendor library linking (static vs dynamic):** **undecided.** Leaning static for the core (determinism, single-binary portability); plugins are dynamic by nature. To be discussed.
+- **Vendor library linking (static vs dynamic):** **proposed: static** for everything built from source; plugins are dynamic by nature. Reasoning and trade-offs in [`linking.md`](./linking.md) *(proposed 2026-10-04, awaiting confirmation)*.
 - **The domain model's concrete shape** (fixtures, groups, scenes, cues, patches, the node-graph component format) is **not yet designed** — only the *style* (handle/POD) is decided.
 - **The novel UX** beyond "game/touch-native, scales with expertise" is **largely unspecified** and will shape Layer-1 data decisions when detailed.
 - **Audio library** (RtAudio — sibling of the already-vendored RtMidi — vs. miniaudio) is **open**.

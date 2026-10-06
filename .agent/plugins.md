@@ -1,7 +1,7 @@
 # eZeGo — Native Plugin System (C ABI)
 
-> **Status:** Living document / proposal. Last updated 2026-06-05.
-> **Companions:** [`philosophy.md`](./philosophy.md) · [`application-architecture.md`](./application-architecture.md) · [`threading-and-timing.md`](./threading-and-timing.md)
+> **Status:** Living document / proposal. Last updated 2026-10-04.
+> **Companions:** [`philosophy.md`](./philosophy.md) · [`application-architecture.md`](./application-architecture.md) · [`threading-and-timing.md`](./threading-and-timing.md) · [`linking.md`](./linking.md) · [`ui-system.md`](./ui-system.md)
 > **Scope:** This document is **only** about *native, compiled C/C++ (or any C-ABI-capable language) plugins* — code a developer builds into a shared library and the host loads at runtime. The in-app **node/graph "blueprint" editor is a different, data-driven mechanism and is explicitly out of scope here.**
 
 ---
@@ -113,7 +113,7 @@ graph TD
 
 | Hook surface | What a plugin contributes | Typical thread |
 |---|---|---|
-| **UI** | New pages, dockable panels, widgets inside the app frame | Main (display) |
+| **UI** | New pages, dockable panels, widgets inside the app frame, through the C function table of the UI system's widget and canvas layers ([`ui-system.md`](./ui-system.md)); never Dear ImGui directly | Main (display) |
 | **Commands/actions** | New invocable operations, keybindable | Main |
 | **Effects / generators** | New effect types evaluated once per frame over a target set | Main, or worker for heavy eval |
 | **Device packs** | A hardware *driver descriptor*: discover / capabilities / build+flash firmware / stream — the natural meeting point of the plugin and hardware visions (see [`application-architecture.md`](./application-architecture.md) §Hardware service layer) | Worker (discovery/flash), Output (stream) |
@@ -188,4 +188,5 @@ void ez_plugin_unload(void) { g_host = NULL; }
 - **Permission / sandboxing depth** for non-permissive plugins (filesystem, network, device access prompts) is intended but **undecided**.
 - **Hot-reload** of plugins during development (a big DX win) is desirable but **unscoped**.
 - **Distribution & discovery** (where plugins live, signing/trust, a registry) is **out of scope for now**.
-- **Static vs dynamic linking of the host's own vendored libs** interacts with plugins (symbol collisions, duplicated runtimes) and is **open** — tracked in [`application-architecture.md`](./application-architecture.md).
+- **Static vs dynamic linking of the host's own vendored libs** interacts with plugins (symbol collisions, duplicated runtimes). **Proposed 2026-10-04:** static host that exports no symbols, with isolation rules for plugins — see [`linking.md`](./linking.md) §6.
+- **The plugin UI surface**: a plugin cannot call the host's Dear ImGui directly. **Proposed 2026-10-05:** plugins use the C function table of eZeGo's own UI API (widgets and canvas), not an exposed ImGui — see [`ui-system.md`](./ui-system.md). The concrete table is designed with the widget vocabulary, after the UX designs.
