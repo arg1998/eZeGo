@@ -17,8 +17,18 @@ if (Test-Path $vswhere) {
 if ($vs) { "OK|MSVC build tools|$vs|" }
 else { "ERROR|MSVC build tools|not found (clang-cl needs the MSVC libraries)|winget install Microsoft.VisualStudio.2022.BuildTools --override `"--quiet --add Microsoft.VisualStudio.Workload.VCTools --includeRecommended`"" }
 
-$kits = Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows Kits\Installed Roots' -Name KitsRoot10
-if ($kits -and (Test-Path (Join-Path $kits.KitsRoot10 'Include'))) { "OK|Windows SDK|$($kits.KitsRoot10)|" }
+# The SDK registers under the 32-bit view; the 64-bit KitsRoot10 can point at a root that only
+# holds side packages (GameInput, Application Verifier), so check both like vcvars does.
+$sdk = $null
+foreach ($key in 'HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows Kits\Installed Roots', 'HKLM:\SOFTWARE\Microsoft\Windows Kits\Installed Roots') {
+  $root = (Get-ItemProperty $key -Name KitsRoot10).KitsRoot10
+  if (-not $root) { continue }
+  $ver = Get-ChildItem (Join-Path $root 'Include') -Directory |
+    Where-Object { Test-Path (Join-Path $_.FullName 'um\Windows.h') } |
+    Sort-Object { [version]$_.Name } | Select-Object -Last 1
+  if ($ver) { $sdk = "$($ver.Name)  $($root.TrimEnd('\'))"; break }
+}
+if ($sdk) { "OK|Windows SDK|$sdk|" }
 else { "ERROR|Windows SDK|not found|add the 'Windows 11 SDK' component in the Visual Studio Installer" }
 
 $clang = Get-Command clang-cl -ErrorAction SilentlyContinue

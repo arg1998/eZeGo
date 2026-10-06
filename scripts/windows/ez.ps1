@@ -1,11 +1,13 @@
 # Windows side of the launcher (called by ez.cmd). Same commands as ./ez. Not yet run on Windows.
-param([Parameter(Position = 0)][string]$Cmd = 'help', [Parameter(ValueFromRemainingArguments = $true)][string[]]$Rest)
+# No param() block on purpose: the parameter binder rejects a bare `--`, which is how arguments
+# are handed to the app (ez run debug -- --quit-after 5). $args passes everything through as typed.
+$Cmd = if ($args.Count -gt 0) { $args[0] } else { 'help' }
+[string[]]$Rest = @($args | Select-Object -Skip 1)
 $ErrorActionPreference = 'Stop'
 Set-Location (Join-Path $PSScriptRoot '..\..')
 . (Join-Path $PSScriptRoot 'env.ps1')
-if (-not $Rest) { $Rest = @() }
 $first = if ($Rest.Count -gt 0) { $Rest[0] } else { $null }
-$tail = if ($Rest.Count -gt 1) { $Rest[1..($Rest.Count - 1)] } else { @() }
+[string[]]$tail = @($Rest | Select-Object -Skip 1)
 
 switch ($Cmd) {
   'doctor'  { cmake -P scripts/doctor.cmake @Rest }

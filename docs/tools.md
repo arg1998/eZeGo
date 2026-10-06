@@ -17,9 +17,12 @@ Per user, keyed by version, shared by every clone and worktree:
 
 | OS | Location |
 |---|---|
-| Linux | `~/.cache/ezego/tools/tracy-0.14.1/` (or `$XDG_CACHE_HOME`) |
-| macOS | `~/Library/Caches/ezego/tools/tracy-0.14.1/` |
-| Windows | `%LOCALAPPDATA%\ezego\tools\tracy-0.14.1\` |
+| Linux | `~/.cache/ezego-dev/tools/tracy-0.14.1/` (or `$XDG_CACHE_HOME`) |
+| macOS | `~/Library/Caches/ezego-dev/tools/tracy-0.14.1/` |
+| Windows | `%LOCALAPPDATA%\ezego-dev\tools\tracy-0.14.1\` |
+
+The `-dev` suffix is deliberate: the plain `ezego` directory belongs to the application itself.
+Nothing in the development workflow may read or write it.
 
 Override with `EZ_TOOLS_DIR` (tools only) or `EZ_CACHE_DIR` (everything: tools, downloads, Tracy's
 own build cache).

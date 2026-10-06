@@ -37,7 +37,15 @@ endif()
 
 function(ez_launch_detached)
   if(CMAKE_HOST_WIN32)
-    execute_process(COMMAND cmd /c start "" ${ARGN})
+    # Not `cmd /c start`: its child inherits our output pipes and execute_process then blocks
+    # until that program exits. Start-Process goes through the shell and inherits nothing.
+    list(POP_FRONT ARGN _exe)
+    set(_ps "Start-Process -FilePath '${_exe}'")
+    if(ARGN)
+      list(JOIN ARGN "\"','\"" _args)
+      string(APPEND _ps " -ArgumentList '\"${_args}\"'")
+    endif()
+    execute_process(COMMAND powershell -NoProfile -Command "${_ps}")
   else()
     list(JOIN ARGN "\" \"" joined)
     execute_process(COMMAND sh -c "nohup \"${joined}\" >/dev/null 2>&1 &")
