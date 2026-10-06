@@ -395,6 +395,8 @@ GCC stays unsupported for now. Minimum compiler versions and OS floors are open 
 
 **What the UI covers.** Mode switch (the preset picker in the status bar); build, run and debug (F5; CodeLLDB on Linux and macOS, the Microsoft C++ debugger on Windows for PDB files); tests in Test Explorer through CMake Tools' CTest support, filtered by label; a "Profile" task that builds `profile` and launches Tracy from the discovered path; `doctor`, `init`, `deps` and `tools` as tasks; format on save with the pinned `clang-format`; clickable compiler errors through problem matchers.
 
+**Revision 2026-10-05 (from use).** Relying on the generated workspace failed in practice: opening the repository *folder*, the natural action, left clangd without a compile database and every file red. Now the folder works on its own: a tracked `.clangd` points at `build/compile_commands.json`; CMake keeps that path linked to the most recently configured preset (`cmake/editor.cmake`; a copy refreshed on build on Windows); a tracked `.vscode/settings.json` holds machine-independent defaults only, and tasks call `cmake` from `PATH`. The generated workspace remains optional, for machine paths such as the Tracy binary.
+
 **Fit.** Presets remain the contract, so CLion and Visual Studio work without any generated file. VS Code is the one editor we generate for. Every button maps one-to-one onto a canonical command, so the terminal and the UI cannot diverge.
 
 **Cost.** A small generator in `scripts/` to maintain, and VS Code setting names occasionally change.

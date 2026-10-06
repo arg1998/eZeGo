@@ -11,6 +11,7 @@ endif()
 include(cmake/modes.cmake)
 include(cmake/targets.cmake)
 include(cmake/deps.cmake)
+include(cmake/editor.cmake)
 
 # ------------------------------------------------------------------ third party (B-8)
 include(third_party/glfw.cmake)

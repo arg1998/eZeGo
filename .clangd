@@ -1,0 +1,11 @@
+# clangd configuration (any editor: VS Code, CLion, Neovim, ...).
+# build/compile_commands.json is kept pointing at the most recently configured preset by
+# cmake/editor.cmake, so code intelligence follows the mode you are working in.
+CompileFlags:
+  CompilationDatabase: build
+---
+# Third-party sources are not ours to lint.
+If:
+  PathMatch: third_party/_src/.*
+Diagnostics:
+  Suppress: "*"

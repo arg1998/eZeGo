@@ -8,14 +8,15 @@
 //   - a thread_local "inside" flag makes any allocation performed while REPORTING bypass the hook
 //   - nothing is reported unless the profiler is alive (manual lifetime, profilerIsAlive())
 
+#include <cstddef>
 #include <cstdlib>
 #include <new>
 
 #include "core/profiler/profiler.hpp"
 
-#if !EZ_MEM_TRACE
-    #error "new_hooks.cpp must only be compiled when EZ_MEM_TRACE is on (profile preset)"
-#endif
+// The build only compiles this file when EZ_MEM_TRACE is on (src/core/CMakeLists.txt); the guard
+// keeps it inert if it is ever compiled elsewhere, and keeps editors quiet in other modes.
+#if EZ_MEM_TRACE
 
 namespace {
 constexpr const char* k_pool = "untracked/operator-new";
@@ -94,3 +95,5 @@ void operator delete(void* p, std::align_val_t) noexcept { hooked_free(p, true);
 void operator delete[](void* p, std::align_val_t) noexcept { hooked_free(p, true); }
 void operator delete(void* p, std::size_t, std::align_val_t) noexcept { hooked_free(p, true); }
 void operator delete[](void* p, std::size_t, std::align_val_t) noexcept { hooked_free(p, true); }
+
+#endif  // EZ_MEM_TRACE

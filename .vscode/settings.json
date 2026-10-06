@@ -1,0 +1,16 @@
+{
+  // Tracked: machine-independent defaults so the repository works when opened as a plain folder.
+  // Machine paths (clangd, Tracy, ...) live in the generated eZeGo.code-workspace; personal
+  // preferences belong in your user settings.
+  "cmake.useCMakePresets": "always",
+  "cmake.configureOnOpen": true,
+  "cmake.ctest.testExplorerIntegrationEnabled": true,
+
+  // clangd provides code intelligence (it reads .clangd -> build/compile_commands.json).
+  // The Microsoft C/C++ extension is only used for its Windows debugger.
+  "C_Cpp.intelliSenseEngine": "disabled",
+  "clangd.arguments": ["--header-insertion=never", "--background-index"],
+
+  "search.exclude": { "build": true, "third_party/_src": true },
+  "files.watcherExclude": { "**/build/**": true, "**/third_party/_src/**": true }
+}
