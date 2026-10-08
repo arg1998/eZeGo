@@ -21,7 +21,7 @@ endif()
 set(_asserts          1       0        0)
 set(_profiler         0       1        0)
 set(_memtrace         0       1        0)
-set(_loglevel         0       2        3)   # 0 trace, 1 debug, 2 info, 3 warn, 4 error
+set(_loglevel         0       2        2)   # 0 trace, 1 debug, 2 info, 3 warn, 4 error (release: Info, logging.md LG-3)
 set(_index_debug 0)
 set(_index_profile 1)
 set(_index_release 2)

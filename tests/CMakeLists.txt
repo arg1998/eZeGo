@@ -12,6 +12,7 @@ foreach(_m IN LISTS EZ_MODULES)
   endif()
 endforeach()
 
+add_subdirectory(bench)
 add_subdirectory(legacy)
 
 # Lint as a test in the check tree only (naming.md N-13): layout rules and formatting. clang-tidy

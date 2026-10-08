@@ -6,3 +6,4 @@
 #                 name      layer  depends on             description
 ez_declare_module(base      0      ""                     "types, platform detection, macros, assertions, strings, hashing, the module table")
 ez_declare_module(cvars     0      "base"                 "runtime variables: registry, validation, startup sources, persistence, console")
+ez_declare_module(log       0      "base;cvars"           "logging: per-thread rings, log thread, sinks, categories, runtime levels")

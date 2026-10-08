@@ -1,6 +1,6 @@
 # eZeGo — Testing
 
-> **Status:** Accepted, 2026-10-08, with doctest. **Phase 1 implemented 2026-10-08**: doctest, `ez_test()`, per-case discovery, `tests/support/` (subprocess runner, temp directory); how-to in [`../docs/testing.md`](../docs/testing.md). Later phases are not implemented. Decision IDs (`T-n`) are indexed in [`README.md`](./README.md).
+> **Status:** Accepted, 2026-10-08, with doctest. **Phase 1 implemented 2026-10-08**: doctest, `ez_test()`, per-case discovery, `tests/support/` (subprocess runner, temp directory); how-to in [`../docs/testing.md`](../docs/testing.md). Phase 4 (bench) implemented the same day. Later phases are not implemented. Decision IDs (`T-n`) are indexed in [`README.md`](./README.md).
 > **Companions:** [`build-system.md`](./build-system.md) B-3 (sanitizer presets), B-12 (tests through CTest) · [`code-organization.md`](./code-organization.md) CO-5 · [`naming.md`](./naming.md) N-8 · [`observability.md`](./observability.md) §7 (regression pipeline) · [`application-architecture.md`](./application-architecture.md) §3.2, §8 · [`philosophy.md`](./philosophy.md) §3.4, §4
 > **Scope:** every kind of test eZeGo will have, which ones exist now, how a developer runs them, the framework and the few purpose-built harnesses, and the strategy for hardware. Continuous integration, the performance reference machine and the hardware bench are **deferred** (§12): all development is local for now and GitHub only hosts the source.
 
@@ -44,7 +44,7 @@ Three kinds deserve a sentence on why they exist for a live-show tool. **Scenari
 | **1** | Framework, `ez test`, unit and integration, the support library, the subprocess harness, labels | The first modules: base, cvars, log | **Done 2026-10-08** |
 | 2 | Smoke through a `--smoke` flag; sanitizer runs through the existing presets | The first window | Next |
 | 3 | Fuzz targets and `ez fuzz` | The first parsers: settings file, project file | When they exist |
-| 4 | Bench as a feature: micro-benchmarks, `ez bench`, local history | The logger and cvars, whose specs promise numbers | With phase 1 or 2, as a toy to learn from |
+| 4 | Bench as a feature: micro-benchmarks, `ez bench`, local history | The logger and cvars, whose specs promise numbers | **Done 2026-10-08** |
 | 5 | Scenario tests, the virtual clock, soak | The engine and the headless runner | Later |
 | 6 | ABI tests | The plugin SDK | Later |
 | 7 | Hardware software twins and the virtual rig | The net, hw, audio and midi modules, each with its twin | Later |

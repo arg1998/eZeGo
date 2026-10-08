@@ -72,6 +72,25 @@ TEST_CASE("base: a failed assert ends the process with a message") {
 }
 ```
 
+## Benchmarks
+
+```bash
+./ez bench                     # builds release, runs every benchmark, compares with your last run
+./ez bench --filter=log        # only names containing "log"
+```
+
+Benchmarks live in `tests/bench/<module>_bench.cpp`; results append to `build/bench/history.jsonl`
+with the commit, and the table shows the change against this machine's previous run. There is no
+gate: until a reference machine exists the numbers inform, they do not fail anything.
+
+```cpp
+EZ_BENCH("log: filtered line") {
+    while (state.next()) {          // only the loop is timed
+        EZ_LOG_INFO(cvars, "x %d", 1);
+    }
+}
+```
+
 ## How discovery works
 
 `ez_test()` in `cmake/testing.cmake` registers a script that runs when `ctest` starts. It asks the

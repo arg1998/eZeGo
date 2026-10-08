@@ -16,3 +16,9 @@ ez_warnings(ez_test_support)
 # doctest's implementation is compiled once, here. Set by the build so no first-party file defines
 # a non-EZ_ macro (naming.md N-7).
 set_source_files_properties(main.cpp PROPERTIES COMPILE_DEFINITIONS DOCTEST_CONFIG_IMPLEMENT)
+
+# ez_bench_support: the runner main of every bench executable (specs/testing.md §9).
+add_library(ez_bench_support OBJECT bench.hpp bench_main.cpp)
+target_include_directories(ez_bench_support PUBLIC "${PROJECT_SOURCE_DIR}/tests")
+target_link_libraries(ez_bench_support PUBLIC ez::config ez::base)
+ez_warnings(ez_bench_support)

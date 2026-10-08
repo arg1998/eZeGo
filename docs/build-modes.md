@@ -7,7 +7,7 @@ needs a cache wipe; switching to a mode that is already built rebuilds nothing.
 |---|---|---|---|---|---|---|
 | `debug` | writing and debugging code | first-party off, third-party `-O2` | on | all | off | off |
 | `profile` | measuring | **identical to release** | off | info+ | on | on (+ `operator new` hook) |
-| `release` | shipping | `-O3` | off | warnings+ | compiled out | off |
+| `release` | shipping | `-O3` | off | info+ | compiled out | off |
 | `asan` | memory errors | debug + Address/UB sanitizers | on | all | off | off |
 | `tsan` | data races (not on Windows) | debug + Thread sanitizer | on | all | off | off |
 

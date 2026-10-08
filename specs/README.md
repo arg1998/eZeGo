@@ -15,11 +15,11 @@ This folder (`specs/`, formerly `.agent/`) holds the design intent for eZeGo. St
 | [`linking.md`](./linking.md) | Static vs dynamic linking, runtimes, plugin isolation | **Proposed 2026-10-04** |
 | [`observability.md`](./observability.md) | Profile build, always-on telemetry, memory tracking | **Proposed 2026-10-04** |
 | [`ui-system.md`](./ui-system.md) | UI API boundary: immediate mode, own vocabulary, widgets / canvas / viewport layers | **Proposed 2026-10-05** |
-| [`logging.md`](./logging.md) | Log API, levels, categories, per-thread rings and log thread, sinks, runtime control, costs | **Proposed 2026-10-08, not implemented** |
+| [`logging.md`](./logging.md) | Log API, levels, categories, per-thread rings and log thread, sinks, runtime control, costs | **Accepted and implemented 2026-10-08** |
 | [`cvars.md`](./cvars.md) | Runtime variables: one registry, zero-cost reads, mutability, validation, persistence, tiers and developer mode, console and panel | **Accepted and implemented 2026-10-08** |
 | [`naming.md`](./naming.md) | Naming and namespaces: three shapes, prefixes and suffixes, files, registry names, the C SDK mapping, enforcement by clang-tidy and a lint script | **Accepted and enforced 2026-10-08** |
 | [`code-organization.md`](./code-organization.md) | The repository tree, the inside of a module, the module table, the module inventory, how the tree grows | **Accepted 2026-10-08, being applied** |
-| [`testing.md`](./testing.md) | Every kind of test, the phased rollout, doctest plus small purpose harnesses, the developer contract, fakes, hardware tiers; CI and reference machines deferred | **Accepted 2026-10-08, phase 1 implemented** |
+| [`testing.md`](./testing.md) | Every kind of test, the phased rollout, doctest plus small purpose harnesses, the developer contract, fakes, hardware tiers; CI and reference machines deferred | **Accepted 2026-10-08, phases 1 and 4 implemented** |
 | [`base.md`](./base.md) | The base layer: detection, types, macros, assertion seam, fixed string, stable hash, module enum | **Accepted and implemented 2026-10-08** |
 
 ## Decision register
@@ -86,18 +86,18 @@ Status values: **Proposed** (written up with trade-offs, awaiting confirmation),
 
 | ID | Decision | Status |
 |---|---|---|
-| LG-1 | One API: `EZ_LOG_<LEVEL>(category, "literal", args...)`, flood guards, and a realtime variant; printf-style; a macro over a variadic template so argument types are known | Proposed |
-| LG-2 | Caller rules enforced at compile time: literal format string, plain-value arguments, single evaluation, truncation; they make the implementation swappable | Proposed |
-| LG-3 | Six levels defined by audience and volume; logs are events, metrics are rates; Trace is the only per-frame level; release floor and runtime default are Info | Proposed; the release floor accepted 2026-10-08 |
-| LG-4 | Categories from a central compile-time table plus a runtime range for plugins; a runtime level per category, `all` and prefix matching | Proposed |
-| LG-5 | Asynchronous: one SPSC byte ring per thread with variable-length records, a preallocated pool for foreign threads, one low-priority log thread draining periodically; no allocation after init, no I/O on callers, drop-and-count when full | Proposed |
-| LG-6 | First implementation formats at the call site; deferred formatting is a later swap behind the same API; profile builds always format at the call site for Tracy | Proposed |
-| LG-7 | Sinks: stderr never stdout; file optional and off by default with periodic flush and immediate flush on Warn+; history ring; Tracy messages in profile; synchronous console when a debugger is attached | Proposed |
-| LG-8 | Record fields fixed: ticks, frame, level, category, thread, file, line, payload; encoding free to change | Proposed |
-| LG-9 | Sizes: build-time hard cap `EZ_LOG_MAX_LINE`, runtime `log.max_line` (512 default), ring and history sizes read at init | Proposed |
-| LG-10 | Runtime control through one mechanism with four doors: defaults < settings file < environment `EZ_LOG` < command line `--log` < in-app console | Proposed |
-| LG-11 | Fatal is synchronous and routes to the crash reporter; the crash path reads rings directly; start after memory and profiler, shut down in reverse | Proposed |
-| LG-12 | Plugins log printf-style through the host table into their own `plugin.<id>` category | Proposed |
+| LG-1 | One API: `EZ_LOG_<LEVEL>(category, "literal", args...)`, flood guards, and a realtime variant; printf-style; a macro over a variadic template so argument types are known | Accepted and implemented 2026-10-08 |
+| LG-2 | Caller rules enforced at compile time: literal format string, plain-value arguments, single evaluation, truncation; they make the implementation swappable | Accepted and implemented 2026-10-08 |
+| LG-3 | Six levels defined by audience and volume; logs are events, metrics are rates; Trace is the only per-frame level; release floor and runtime default are Info | Accepted and implemented 2026-10-08 |
+| LG-4 | Categories from a central compile-time table plus a runtime range for plugins; a runtime level per category, `all` and prefix matching | Accepted and implemented 2026-10-08 |
+| LG-5 | Asynchronous: one SPSC byte ring per thread with variable-length records, a preallocated pool for foreign threads, one low-priority log thread draining periodically; no allocation after init, no I/O on callers, drop-and-count when full | Accepted and implemented 2026-10-08 |
+| LG-6 | First implementation formats at the call site; deferred formatting is a later swap behind the same API; profile builds always format at the call site for Tracy | Accepted and implemented 2026-10-08 |
+| LG-7 | Sinks: stderr never stdout; file optional and off by default with periodic flush and immediate flush on Warn+; history ring; Tracy messages in profile; synchronous console when a debugger is attached | Accepted and implemented 2026-10-08 |
+| LG-8 | Record fields fixed: ticks, frame, level, category, thread, file, line, payload; encoding free to change | Accepted and implemented 2026-10-08 |
+| LG-9 | Sizes: build-time hard cap `EZ_LOG_MAX_LINE`, runtime `log.max_line` (512 default), ring and history sizes read at init | Accepted and implemented 2026-10-08 |
+| LG-10 | Runtime control through one mechanism with four doors: defaults < settings file < environment `EZ_LOG` < command line `--log` < in-app console | Accepted and implemented 2026-10-08 |
+| LG-11 | Fatal is synchronous and routes to the crash reporter; the crash path reads rings directly; start after memory and profiler, shut down in reverse | Accepted and implemented 2026-10-08 |
+| LG-12 | Plugins log printf-style through the host table into their own `plugin.<id>` category | Accepted and implemented 2026-10-08 |
 
 ### Runtime variables — [`cvars.md`](./cvars.md)
 
@@ -187,7 +187,7 @@ Status values: **Proposed** (written up with trade-offs, awaiting confirmation),
 | Dependencies via CMake `FetchContent` | `application-architecture.md` §5 | Explicit fetch step driven by the manifest (B-7) |
 | Vendor linking "undecided" | `philosophy.md` §6, `application-architecture.md` §9, `plugins.md` §7 | Static (L-1 to L-5) |
 | Synchronous logger writing to the platform console; reversed level enum; fixed 20 KiB format buffer | prototype `src/core/logger/`, `configs.hpp` | Per-thread rings and a log thread, ascending levels matching `EZ_LOG_LEVEL`, runtime line size (LG-3, LG-5, LG-9) |
-| `release` log floor at Warn | `build-system.md` B-3 table, `observability.md` §6, `cmake/modes.cmake`, `docs/build-modes.md` | Info floor and Info runtime default (LG-3), accepted 2026-10-08; the two specs are corrected, the CMake table and how-to page are updated when the logger is implemented |
+| `release` log floor at Warn | `build-system.md` B-3 table, `observability.md` §6, `cmake/modes.cmake`, `docs/build-modes.md` | Info floor and Info runtime default (LG-3), accepted and applied 2026-10-08 in the specs, `cmake/modes.cmake` and `docs/build-modes.md` |
 | Target names in the B-9 graph: `ez_plugin_host`, `ez_sdk` as a target under `src/`, one `ez_base` holding memory, platform, logging and metrics | `build-system.md` B-9 | A `plugin` module, `sdk/` at the repository root, one module per directory with `base` holding only the primitives (CO-1, CO-7, CO-9) |
 | Testing frameworks "open" | `philosophy.md` §6, `application-architecture.md` §8 and §9, `build-system.md` B-12 and §6 | doctest plus small purpose harnesses (T-1); the test kinds and labels in T-2 extend B-12's list |
 

@@ -49,3 +49,18 @@ function(ez_test name)
     "include([==[${PROJECT_SOURCE_DIR}/cmake/test_discovery.cmake]==])\n")
   set_property(DIRECTORY APPEND PROPERTY TEST_INCLUDE_FILES "${_include}")
 endfunction()
+
+# ez_bench(<module> SOURCES ... [DEPS ...]): a micro-benchmark executable ez_bench_<module> in
+# <tree>/bench/ (specs/testing.md T-10). Not a CTest test: `ez bench` runs these from the release tree.
+function(ez_bench name)
+  cmake_parse_arguments(B "" "" "SOURCES;DEPS" ${ARGN})
+  set(target ez_bench_${name})
+  add_executable(${target} ${B_SOURCES})
+  set(_module "")
+  if(name IN_LIST EZ_MODULES)
+    set(_module ez::${name})
+  endif()
+  target_link_libraries(${target} PRIVATE ez::config ez_bench_support ${_module} ${B_DEPS})
+  ez_warnings(${target})
+  set_target_properties(${target} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bench" FOLDER bench)
+endfunction()

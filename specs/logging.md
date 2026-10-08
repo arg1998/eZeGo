@@ -1,6 +1,6 @@
 # eZeGo — Logging
 
-> **Status:** Proposed, 2026-10-08. **Not implemented.** The logger in `src/core/logger/` is the prototype's synchronous design; it is replaced by this, not extended. Decisions are *proposed* until confirmed. Decision IDs (`LG-n`) are indexed in [`README.md`](./README.md).
+> **Status:** Accepted and implemented, 2026-10-08 (`src/ez/log/`, first implementation: formatting at the call site). How-to in [`../docs/logging.md`](../docs/logging.md). The prototype logger in `src/core/logger/` remains only for the prototype app until that app moves to `src/ez/`. §13 records what the implementation settled. Decision IDs (`LG-n`) are indexed in [`README.md`](./README.md).
 > **Companions:** [`cvars.md`](./cvars.md) (every setting below is a cvar) · [`observability.md`](./observability.md) (metrics, Tracy, flight recorder, crash reports) · [`threading-and-timing.md`](./threading-and-timing.md) §7 (ring buffers) · [`linking.md`](./linking.md) L-5, L-6 · [`plugins.md`](./plugins.md) §6 · [`build-system.md`](./build-system.md) B-3 · [`philosophy.md`](./philosophy.md) §2
 > **Scope:** how first-party code and plugins emit log lines, what a line costs on the thread that emits it, where lines go, and how developers and users control them. Metrics and crash reporting appear here as consumers; runtime variables are designed in [`cvars.md`](./cvars.md) and only used here. Identifier names are tentative until the naming convention is confirmed (§12).
 
@@ -461,9 +461,7 @@ The logger is in Layer 0 and is among the first things initialised, so most of i
 
 ### 12.1 To clarify before implementation starts
 
-| # | Question | Default if unanswered |
-|---|---|---|
-| 1 | **Naming convention.** This document uses `ez::log::` namespaces, snake_case functions, `EZ_` macros and `.hpp` for C++-only headers. The convention is pending from the foundations discussion and applies to every identifier here. | As written |
+Nothing: the naming convention was accepted on 2026-10-08 ([`naming.md`](./naming.md)).
 
 Nothing else blocks accepting the design. Everything below has a stated default and can be revisited from use.
 
@@ -482,3 +480,40 @@ Nothing else blocks accepting the design. Everything below has a stated default 
 | The deferred-formatting swap (§4.5) | First implementation | A measurement shows call-site formatting on the frame thread matters |
 | `-Werror=format` locally, or only in the `check` preset | Only in `check` and CI, like other warnings | Warnings policy in the foundations document |
 | Trace lines in `profile` builds for a one-off investigation | Not available; `profile` floor is Info | A personal preset could set `EZ_LOG_LEVEL=0` on `profile` if ever needed |
+
+---
+
+## 13. Implementation notes (2026-10-08)
+
+### 13.1 Measured costs
+
+`ez bench`, release tree, AMD Ryzen Threadripper 3970X, Linux, Clang 18. Median per operation on the
+calling thread; the logger running with a 16 MiB ring, a 1 ms drain and stderr off.
+
+| Operation | Measured | §7 estimate |
+|---|---|---|
+| Filtered line (category below its runtime level) | 1.9 ns | ~1 ns |
+| Enabled line, one integer | 99–190 ns | 0.5–2 µs |
+| Enabled line, integer + float + string | 420 ns | 0.5–2 µs |
+| Realtime variant | 69 ns | ~30 ns |
+| Flood-guarded hit, suppressed | 4.9 ns (an atomic increment) | ~1 ns |
+
+The call-site formatting the first implementation uses is cheaper than estimated, which lowers the
+pressure for the deferred-formatting swap of §4.5. The realtime variant and the flood guard cost
+more than estimated; both are bounded and lock-free.
+
+### 13.2 What the implementation settled
+
+| Topic | As implemented |
+|---|---|
+| Categories | One per module, generated from `modules.cmake`; sub-categories such as `net.artnet` arrive with sub-modules. The plugin range 64..127 is reserved, without an API yet. |
+| Level cvars | `log.level.all` plus one `log.level.<module>` per module, generated; a module's level defaults to `inherit`. `off` silences everything but Fatal. |
+| Extra cvar | `log.stderr` (developer tier): switches the console sink off, for benchmarks and tools that own stderr. |
+| Pool | Rings are claimed on a thread's first line or by `register_thread`; a thread's ring is returned to the pool once it has exited and been drained. |
+| Not running | Before `init()` and after `shutdown()`, lines are rendered and written to stderr on the caller. |
+| Exit without shutdown | The log thread is stopped and what is queued is written; nothing else is touched. |
+| Seams | `set_profiler_hook` (called at the call site), `set_fatal_hook`, `add_sink`, `read_history`. Nothing includes Tracy; the profiler backend installs the hook. |
+| Fatal | Drains every ring, writes its own line to every sink, flushes, calls the fatal hook, then `abort()`. |
+| cvars messages | The logger installs itself as the cvars report receiver, so startup warnings and every cvar change appear as `cvars` lines. |
+| Line ending | A cut line ends with `...` (ASCII) rather than `…`. |
+| Not yet done | Plugin categories and the plugin `host->log`; the Windows paths are written but not yet compiled; the prototype app still uses the prototype logger. |
