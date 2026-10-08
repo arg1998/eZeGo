@@ -1,6 +1,6 @@
 # Windows side of the launcher (called by ez.cmd). Same commands as ./ez. Not yet run on Windows.
 # No param() block on purpose: the parameter binder rejects a bare `--`, which is how arguments
-# are handed to the app (ez run debug -- --quit-after 5). $args passes everything through as typed.
+# are handed to the app (ez run debug -- --app.quit_after_s=5). $args passes everything through as typed.
 $Cmd = if ($args.Count -gt 0) { $args[0] } else { 'help' }
 [string[]]$Rest = @($args | Select-Object -Skip 1)
 $ErrorActionPreference = 'Stop'

@@ -7,7 +7,7 @@ Deep profiling uses [Tracy](https://github.com/wolfpld/tracy) in the `profile` p
 
 ```bash
 ./ez profile                         # cmake -P scripts/profile.cmake
-./ez profile -- --quit-after 30      # pass arguments to the app
+./ez profile -- --log=all:debug     # pass arguments to the app
 ```
 
 This builds `profile`, opens the pinned Tracy GUI connected to `127.0.0.1`, and runs the app.
@@ -26,21 +26,20 @@ build stays light.
 
 | In Tracy | Comes from |
 |---|---|
-| Frame marks, zone `Main Loop` | `src/application/main.cpp` |
-| Zones `Input Processing`, `Begin Frame Generation`, `Render Frame` | `src/application/application.cpp` |
-| Plot `frame ms` | main loop |
-| Messages (colored by level) | every log line (`src/core/logger`) |
-| Memory pool `ez/general` | `ezAllocate` / `ezFree` (`src/core/memory`) |
-| Memory pool `untracked/operator-new` | profile-only `operator new` hooks (`src/core/memory/new_hooks.cpp`) |
+| Frame marks, zone `Main Loop`, plot `frame ms` | `src/ez/app/app.cpp` |
+| Zones `Input`, `Begin Frame`, `Render Frame` | `src/ez/app/detail/shell.cpp` |
+| Messages, coloured by level | every log line, through the logger's profiler hook |
+| Memory pool `untracked/operator-new` | profile-only `operator new` hooks (`src/ez/metrics/new_hooks.cpp`) |
 
-Instrument code through `src/core/profiler/profiler.hpp` only: `EZ_PROFILE_ZONE("name")`,
-`EZ_PROFILE_FUNCTION()`, `EZ_PROFILE_FRAME()`, `EZ_PROFILE_PLOT(name, value)`. They compile to
-nothing outside the `profile` preset, and Tracy's headers are not even on the include path there,
-so nothing can use Tracy by accident.
+Instrument code through `ez/metrics/profiler.hpp` only: `EZ_PROF_ZONE("name")`,
+`EZ_PROF_FUNCTION()`, `EZ_PROF_FRAME()`, `EZ_PROF_FRAME_START/END("series")`,
+`EZ_PROF_PLOT(name, value)`. They compile to nothing outside the `profile` preset, and Tracy's
+headers are not on the include path there, so nothing can use Tracy by accident. Inside `profile`
+they are inert until `ez::metrics::start_profiler()` and after `stop_profiler()`, so instrumented
+code may run at any time.
 
-Startup order matters (manual lifetime): `startProfiler()` → `initLoggingSystem()` → platform →
-application, and the reverse on shutdown. A thread must not register with Tracy before the
-profiler starts.
+Startup order (manual lifetime, observability.md §3): settings, `start_profiler()`, `log::init()`,
+then everything else; the reverse on shutdown. `src/apps/ezego/main.cpp` shows it.
 
 ## Personal settings
 

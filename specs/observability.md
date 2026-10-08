@@ -1,6 +1,6 @@
 # eZeGo — Observability: Profiling and Always-on Telemetry
 
-> **Status:** Proposal, 2026-10-04. Decisions are *proposed* until confirmed. Decision IDs (`O-n`) are indexed in [`README.md`](./README.md).
+> **Status:** Proposal, 2026-10-04. **Partly implemented 2026-10-08:** the profiler half of the facade (`EZ_PROF_*`, `src/ez/metrics/profiler.hpp`), log lines as Tracy messages, and the ring-3 `operator new` hooks; the always-on metrics tier is not. Decisions are *proposed* until confirmed. Decision IDs (`O-n`) are indexed in [`README.md`](./README.md).
 > **Companions:** [`philosophy.md`](./philosophy.md) §3 · [`build-system.md`](./build-system.md) B-3 · [`linking.md`](./linking.md) · [`threading-and-timing.md`](./threading-and-timing.md)
 > **Scope:** how eZeGo measures itself: in a dedicated profiling build, and in the build users run. Names of macros and metrics are tentative.
 

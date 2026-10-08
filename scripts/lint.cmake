@@ -10,8 +10,7 @@
 # Findings print as `path:line: error: message [ez-rule]`, which editors make clickable.
 # Suppress one finding on its line with `// NOLINT(ez-rule)` and a reason; suppressions are counted.
 #
-# Scope: first-party code in src/ez/, tests/, sdk/ and plugins/. The prototype under src/core/,
-# src/application/ and tests/legacy/ is exempt; it is replaced, not renamed.
+# Scope: first-party code in src/ez/, src/apps/, src/tools/, tests/, sdk/ and plugins/.
 
 include("${CMAKE_CURRENT_LIST_DIR}/lib/common.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/lib/llvm.cmake")
@@ -64,7 +63,7 @@ if(EXISTS "${_table}")
 endif()
 
 # ------------------------------------------------------------------ collect files
-set(_scope_dirs src/ez tests sdk plugins)
+set(_scope_dirs src/ez src/apps src/tools tests sdk plugins)
 set(_files "")
 foreach(_d IN LISTS _scope_dirs)
   if(IS_DIRECTORY "${EZ_ROOT}/${_d}")
@@ -72,7 +71,7 @@ foreach(_d IN LISTS _scope_dirs)
     list(APPEND _files ${_f})
   endif()
 endforeach()
-list(FILTER _files EXCLUDE REGEX "/tests/legacy/|/tests/fuzz/corpus/|/tests/scenarios/")
+list(FILTER _files EXCLUDE REGEX "/tests/fuzz/corpus/|/tests/scenarios/")
 list(SORT _files)
 
 set(_sources "")

@@ -1,7 +1,10 @@
-#include "application.hpp"
-#include "core/logger/logger.hpp"
-#include "core/platform/platform.hpp"
-#include "core/profiler/profiler.hpp"
+// The placeholder shell (see detail/shell.hpp), moved from the prototype's src/application.
+#include "ez/app/detail/shell.hpp"
+
+#include "ez/app/detail/paths.hpp"
+#include "ez/base/types.hpp"
+#include "ez/log/log.hpp"
+#include "ez/metrics/profiler.hpp"
 
 #include <GLFW/glfw3.h>
 #include <imgui.h>
@@ -10,25 +13,28 @@
 
 #include <cstdio>
 
-static void glfw_error_callback(int error, const char* description) {
-    EZ_LOG_ERROR("GLFW[%d]: %s", error, description);
+namespace ez::app::detail {
+
+namespace {
+
+GLFWwindow* g_window = nullptr;
+
+// The few GL entry points the shell calls itself, loaded through GLFW at runtime: no GL headers or
+// GL development package are needed to build (ImGui's backend has its own loader).
+using GlViewportFn = void (*)(int, int, int, int);
+using GlClearColorFn = void (*)(float, float, float, float);
+using GlClearFn = void (*)(unsigned int);
+GlViewportFn g_gl_viewport = nullptr;
+GlClearColorFn g_gl_clear_color = nullptr;
+GlClearFn g_gl_clear = nullptr;
+constexpr unsigned int gl_color_buffer_bit = 0x00004000;
+
+void glfw_error(int error, const char* description) {
+    EZ_LOG_ERROR(app, "GLFW %d: %s", error, description);
 }
 
-static ezWindow mainWindow;
-
-// The few GL entry points the application calls itself, loaded through GLFW at runtime: no GL
-// headers or GL development package are needed to build (ImGui's backend has its own loader).
-using PfnGlViewport   = void (*)(int, int, int, int);
-using PfnGlClearColor = void (*)(float, float, float, float);
-using PfnGlClear      = void (*)(unsigned int);
-static PfnGlViewport   glViewportFn;
-static PfnGlClearColor glClearColorFn;
-static PfnGlClear      glClearFn;
-static constexpr unsigned int EZ_GL_COLOR_BUFFER_BIT = 0x00004000;
-
-static void applicationEnableDarkTheme() {
-    EZ_LOG_TRACE();
-    // TODO(Argosta): read this from a file
+void apply_dark_theme() {
+    // TODO(Argosta): load from the theme file (application-architecture.md §6).
     ImVec4* colors = ImGui::GetStyle().Colors;
     colors[ImGuiCol_Text] = ImVec4(1.00f, 1.00f, 1.00f, 1.00f);
     colors[ImGuiCol_TextDisabled] = ImVec4(0.50f, 0.50f, 0.50f, 1.00f);
@@ -111,139 +117,114 @@ static void applicationEnableDarkTheme() {
     style.TabRounding = 4;
 }
 
-b8 initApplication() {
-    EZ_LOG_TRACE();
-    EZ_PROFILE_FUNCTION();
-    mainWindow.height = 720;
-    mainWindow.width = 1280;
-    mainWindow.windowTitle = "eZeGo";
-    mainWindow.parentWindow = nullptr;
-    mainWindow.childWindow = nullptr;
-    mainWindow.state = ezWindowState::EZ_WINDOW_DYNAMIC;
+void load_fonts() {
+    ImGuiIO& io = ImGui::GetIO();
+    ImFontConfig config;
+    config.OversampleH = 3;
+    config.OversampleV = 3;
+    config.RasterizerMultiply = 1.2f;
+    // Assets are copied next to the executable by the build (src/apps/ezego/CMakeLists.txt).
+    char path[1200];
+    std::snprintf(path, sizeof(path), "%s/assets/fonts/OpenSans-Regular.ttf", executable_dir().c_str());
+    if (io.Fonts->AddFontFromFileTTF(path, 18.0f, &config) == nullptr) {
+        EZ_LOG_WARN(app, "cannot load the font %s; using the default font", path);
+    }
+}
 
-    glfwSetErrorCallback(glfw_error_callback);
-    if (!glfwInit()) {
-        EZ_LOG_ERROR("Failed to initialize GLFW");
+}  // namespace
+
+bool shell_init() noexcept {
+    EZ_PROF_FUNCTION();
+    glfwSetErrorCallback(&glfw_error);
+    if (glfwInit() == GLFW_FALSE) {
+        EZ_LOG_ERROR(app, "cannot initialise GLFW");
         return false;
     }
-    const char* GLSL_VERSION = "#version 410";
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);   // required on macOS
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);  // required on macOS
     glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_TRUE);
-
-    mainWindow.window = glfwCreateWindow((int)mainWindow.width, (int)mainWindow.height, mainWindow.windowTitle, NULL, NULL);
-    if (!mainWindow.window) {
-        EZ_LOG_ERROR("Failed to create a window with an OpenGL 4.1 core context");
+    constexpr int width = 1280;
+    constexpr int height = 720;
+    g_window = glfwCreateWindow(width, height, "eZeGo", nullptr, nullptr);
+    if (g_window == nullptr) {
+        EZ_LOG_ERROR(app, "cannot create a window with an OpenGL 4.1 core context");
         glfwTerminate();
         return false;
     }
-
-    glfwMakeContextCurrent(mainWindow.window);
-    glfwSwapInterval(1);  // Enable vsync
-    glViewportFn   = (PfnGlViewport)glfwGetProcAddress("glViewport");
-    glClearColorFn = (PfnGlClearColor)glfwGetProcAddress("glClearColor");
-    glClearFn      = (PfnGlClear)glfwGetProcAddress("glClear");
+    glfwMakeContextCurrent(g_window);
+    glfwSwapInterval(1);  // vsync
+    g_gl_viewport = reinterpret_cast<GlViewportFn>(glfwGetProcAddress("glViewport"));
+    g_gl_clear_color = reinterpret_cast<GlClearColorFn>(glfwGetProcAddress("glClearColor"));
+    g_gl_clear = reinterpret_cast<GlClearFn>(glfwGetProcAddress("glClear"));
 
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO();
-    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;    // for docking
-    io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;  // for multi-viewport support (rendering outside of the window frame)
-    io.IniFilename = nullptr;                            // TODO(Argosta): decide where UI layout is persisted
-
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+    io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;  // windows outside the main window
+    io.IniFilename = nullptr;                            // TODO(Argosta): decide where the UI layout is persisted
     ImGui::StyleColorsDark();
-    applicationEnableDarkTheme();
-    f32 dpi_scale = 1.0f;
-    glfwGetWindowContentScale(mainWindow.window, &dpi_scale, nullptr);
+    apply_dark_theme();
+    float dpi_scale = 1.0f;
+    glfwGetWindowContentScale(g_window, &dpi_scale, nullptr);
     ImGui::GetStyle().ScaleAllSizes(dpi_scale);
     ImGui::GetStyle().FontScaleDpi = dpi_scale;
-
-    // Setup Platform/Renderer backends
-    ImGui_ImplGlfw_InitForOpenGL(mainWindow.window, true);
-    ImGui_ImplOpenGL3_Init(GLSL_VERSION);
-
-    EZ_LOG_INFO("GLFW %s, window %ux%u, DPI scale %.2f", glfwGetVersionString(), mainWindow.width, mainWindow.height, dpi_scale);
+    ImGui_ImplGlfw_InitForOpenGL(g_window, true);
+    ImGui_ImplOpenGL3_Init("#version 410");
+    load_fonts();
+    EZ_LOG_INFO(app, "GLFW %s, window %dx%d, DPI scale %.2f", glfwGetVersionString(), width, height, double(dpi_scale));
     return true;
 }
 
-void shutdownApplication() {
-    EZ_LOG_TRACE();
+void shell_shutdown() noexcept {
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
-    glfwDestroyWindow(mainWindow.window);
+    glfwDestroyWindow(g_window);
+    g_window = nullptr;
     glfwTerminate();
 }
 
-void applicationBeginFrame() {
-    EZ_PROFILE_ZONE("Begin Frame Generation");
-    // Start the Dear ImGui frame
+void shell_poll() noexcept {
+    EZ_PROF_ZONE("Input");
+    glfwPollEvents();
+}
+
+bool shell_should_close() noexcept {
+    return glfwWindowShouldClose(g_window) == GLFW_TRUE;
+}
+
+void shell_request_close() noexcept {
+    glfwSetWindowShouldClose(g_window, GLFW_TRUE);
+}
+
+void shell_begin_frame() noexcept {
+    EZ_PROF_ZONE("Begin Frame");
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 }
 
-void applicationRenderFrame() {
-    EZ_PROFILE_ZONE("Render Frame");
+void shell_end_frame() noexcept {
+    EZ_PROF_ZONE("Render Frame");
     ImGui::Render();
-
-    int display_w, display_h;
-    glfwGetFramebufferSize(mainWindow.window, &display_w, &display_h);
-    glViewportFn(0, 0, display_w, display_h);
-    glClearColorFn(0.0f, 0.0f, 0.0f, 1.0f);
-    glClearFn(EZ_GL_COLOR_BUFFER_BIT);
+    int w = 0;
+    int h = 0;
+    glfwGetFramebufferSize(g_window, &w, &h);
+    g_gl_viewport(0, 0, w, h);
+    g_gl_clear_color(0.0f, 0.0f, 0.0f, 1.0f);
+    g_gl_clear(gl_color_buffer_bit);
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
-    // Multi-Viewport support (rendering outside the window frames)
-    // Update and Render additional Platform Windows
-    // (Platform functions may change the current OpenGL context, so we save/restore it.)
-    if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
-        GLFWwindow* backup_current_context = glfwGetCurrentContext();
+    // Extra viewports may switch the GL context; restore it.
+    if ((ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable) != 0) {
+        GLFWwindow* context = glfwGetCurrentContext();
         ImGui::UpdatePlatformWindows();
         ImGui::RenderPlatformWindowsDefault();
-        glfwMakeContextCurrent(backup_current_context);
+        glfwMakeContextCurrent(context);
     }
-
-    glfwSwapBuffers(mainWindow.window);
+    glfwSwapBuffers(g_window);
 }
 
-bool shouldApplicationClose() {
-    return mainWindow.state == ezWindowState::EZ_WINDOW_CLOSED;
-}
-
-void applicationRequestClose() {
-    glfwSetWindowShouldClose(mainWindow.window, GLFW_TRUE);
-}
-
-void applicationProcessInput() {
-    EZ_PROFILE_ZONE("Input Processing");
-    if (glfwWindowShouldClose(mainWindow.window)) {
-        // TODO(Argosta): prompt user if they want to close the application
-        // to do this, uncoment the line bellow and check the window state in the
-        // rendering part to show the closing prompt
-
-        // mainWindow.state = ezWindowState::EZ_WINDOW_USER_CLOSING;
-
-        mainWindow.state = ezWindowState::EZ_WINDOW_CLOSED;
-    }
-    glfwPollEvents();
-}
-
-void applicationLoadFonts() {
-    EZ_LOG_TRACE();
-    ImGuiIO& io = ImGui::GetIO();
-
-    ImFontConfig main_font_config;
-    main_font_config.OversampleH = 3;
-    main_font_config.OversampleV = 3;
-    main_font_config.RasterizerMultiply = 1.2f;
-
-    // Assets are copied next to the executable by the build (src/application/CMakeLists.txt).
-    char main_font_path[1200];
-    snprintf(main_font_path, sizeof(main_font_path), "%s/assets/fonts/OpenSans-Regular.ttf", platformGetExecutableDir());
-    if (!io.Fonts->AddFontFromFileTTF(main_font_path, 18.0f, &main_font_config)) {
-        EZ_LOG_WARN("Failed to load \"%s\"; using the default font", main_font_path);
-    }
-}
+}  // namespace ez::app::detail

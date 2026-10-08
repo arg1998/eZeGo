@@ -40,7 +40,7 @@ Only for building Tracy from source (not needed with the prebuilt):
 ./ez build              # cmake --workflow --preset debug
 ./ez test               # ctest --preset debug
 ./ez run                # build, then run build/debug/bin/ezego
-./ez run debug -- --quit-after 5     # arguments after -- go to the app
+./ez run debug -- --app.quit_after_s=5   # arguments after -- go to the app
 ```
 
 The app is a Dear ImGui "Hello, eZeGo" window showing the build mode, platform, compiler and

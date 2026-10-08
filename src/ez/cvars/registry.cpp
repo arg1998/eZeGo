@@ -666,6 +666,7 @@ StartupResult Registry::init(const InitOptions& options) noexcept {
 
     // --help and --reset-settings first: they change what happens to everything else.
     bool help = false;
+    bool version = false;
     bool reset_settings = false;
     for (int i = 1; i < options.argc; ++i) {
         const std::string_view a = options.argv[i];
@@ -673,7 +674,23 @@ StartupResult Registry::init(const InitOptions& options) noexcept {
             break;
         }
         help = help || a == "--help" || a == "-h";
+        version = version || (a == "--version" && options.version_text != nullptr);
         reset_settings = reset_settings || a == "--reset-settings";
+    }
+    if (options.settings_path == nullptr) {
+        if (!detail::default_settings_path(settings_path_)) {
+            settings_path_.clear();
+        }
+    } else {
+        settings_path_.assign(options.settings_path);
+    }
+    if (version && !help) {
+        const Writer out = options.help_out.write != nullptr ? options.help_out : stdout_writer();
+        out(options.version_text);
+        out("\n");
+        result.exit_now = true;
+        result.exit_code = 0;
+        return result;
     }
     if (help) {
         write_help(options.help_out.write != nullptr ? options.help_out : stdout_writer());
@@ -683,13 +700,6 @@ StartupResult Registry::init(const InitOptions& options) noexcept {
     }
 
     // ---------------------------------------------------------------- settings file
-    if (options.settings_path == nullptr) {
-        if (!detail::default_settings_path(settings_path_)) {
-            settings_path_.clear();
-        }
-    } else {
-        settings_path_.assign(options.settings_path);
-    }
     if (!settings_path_.empty() && reset_settings) {
         std::error_code ec;
         if (std::filesystem::exists(settings_path_.c_str(), ec)) {
@@ -777,7 +787,8 @@ StartupResult Registry::init(const InitOptions& options) noexcept {
             if (a == "--") {
                 break;
             }
-            if (a.size() < 3 || a.substr(0, 2) != "--" || a == "--reset-settings") {
+            if (a.size() < 3 || a.substr(0, 2) != "--" || a == "--reset-settings" ||
+                (a == "--version" && options.version_text != nullptr)) {
                 continue;  // positional arguments belong to the application
             }
             const std::string_view body = a.substr(2);
@@ -1074,8 +1085,9 @@ void Registry::dump(Writer out) const noexcept {
 void Registry::write_help(Writer out) const noexcept {
     Text head;
     head.printf(
-        "Usage: ezego [options] [project]\n\n"
+        "Options:\n"
         "  --help                 this text\n"
+        "  --version              print the version and exit\n"
         "  --reset-settings       set the settings file aside and start with defaults\n");
     for (usize s = 0; s < shorthand_count_; ++s) {
         head.printf("  --%s=...\n", shorthands_[s].name);
@@ -1111,7 +1123,11 @@ void Registry::write_help(Writer out) const noexcept {
         t.printf("  --%s=<", m.name);
         accepted_text(m, t);
         t.append(">  default ");
-        shown(m, d, t);
+        if (m.type == Type::String && d.text.empty()) {
+            t.append("\"\"");
+        } else {
+            shown(m, d, t);
+        }
         if (m.options.mutability != Mutability::Live) {
             const std::string_view mu = mutability_name(m.options.mutability);
             t.printf(", %.*s", int(mu.size()), mu.data());

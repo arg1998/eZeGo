@@ -1,6 +1,6 @@
 # eZeGo — Logging
 
-> **Status:** Accepted and implemented, 2026-10-08 (`src/ez/log/`, first implementation: formatting at the call site). How-to in [`../docs/logging.md`](../docs/logging.md). The prototype logger in `src/core/logger/` remains only for the prototype app until that app moves to `src/ez/`. §13 records what the implementation settled. Decision IDs (`LG-n`) are indexed in [`README.md`](./README.md).
+> **Status:** Accepted and implemented, 2026-10-08 (`src/ez/log/`, first implementation: formatting at the call site). How-to in [`../docs/logging.md`](../docs/logging.md). The prototype logger was removed on 2026-10-08. §13 records what the implementation settled. Decision IDs (`LG-n`) are indexed in [`README.md`](./README.md).
 > **Companions:** [`cvars.md`](./cvars.md) (every setting below is a cvar) · [`observability.md`](./observability.md) (metrics, Tracy, flight recorder, crash reports) · [`threading-and-timing.md`](./threading-and-timing.md) §7 (ring buffers) · [`linking.md`](./linking.md) L-5, L-6 · [`plugins.md`](./plugins.md) §6 · [`build-system.md`](./build-system.md) B-3 · [`philosophy.md`](./philosophy.md) §2
 > **Scope:** how first-party code and plugins emit log lines, what a line costs on the thread that emits it, where lines go, and how developers and users control them. Metrics and crash reporting appear here as consumers; runtime variables are designed in [`cvars.md`](./cvars.md) and only used here. Identifier names are tentative until the naming convention is confirmed (§12).
 
@@ -516,4 +516,5 @@ more than estimated; both are bounded and lock-free.
 | Fatal | Drains every ring, writes its own line to every sink, flushes, calls the fatal hook, then `abort()`. |
 | cvars messages | The logger installs itself as the cvars report receiver, so startup warnings and every cvar change appear as `cvars` lines. |
 | Line ending | A cut line ends with `...` (ASCII) rather than `…`. |
-| Not yet done | Plugin categories and the plugin `host->log`; the Windows paths are written but not yet compiled; the prototype app still uses the prototype logger. |
+| Assertions | While the logger runs it is the base assert handler: a failed assertion is written after every pending line, on every sink, before the debugger break. |
+| Not yet done | Plugin categories and the plugin `host->log`; the Windows paths are written but not yet compiled. |

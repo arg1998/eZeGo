@@ -47,13 +47,15 @@ struct InitOptions {
     const char* const* envp = nullptr;
     // Settings file; nullptr means the per-user default location, "" means no file.
     const char* settings_path = nullptr;
-    // Where --help writes; the default is stdout.
+    // Where --help and --version write; the default is stdout.
     Writer help_out{};
+    // The line --version prints; nullptr means --version is not an option.
+    const char* version_text = nullptr;
 };
 
 struct StartupResult {
     bool ok = true;         // no invalid value anywhere
-    bool exit_now = false;  // --help was handled, or an error: print `report` and exit with `exit_code`
+    bool exit_now = false;  // --help or --version was handled, or an error: print `report`, exit with `exit_code`
     int exit_code = 0;
     u32 error_count = 0;
     FixedString<8191> report;  // every error, one per line

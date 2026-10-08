@@ -47,9 +47,8 @@ void* ImGuiAlloc(size_t n, void*);  // NOLINT(readability-identifier-naming) ImG
 
 ## Scope
 
-First-party code in `src/ez/`, `tests/`, `sdk/` and `plugins/`. The prototype in `src/core/`,
-`src/application/` and `tests/legacy/` is exempt (its CMake directories set `EZ_LEGACY`), because
-it is replaced rather than renamed.
+All first-party code: `src/ez/`, `src/apps/`, `src/tools/`, `tests/`, `sdk/` and `plugins/`.
+Third-party code under `third_party/_src/` is never linted.
 
 ## Tools and versions
 

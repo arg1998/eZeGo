@@ -193,7 +193,7 @@ Status values: **Proposed** (written up with trade-offs, awaiting confirmation),
 
 ## Tooling (implemented 2026-10-05)
 
-The build-system proposals were prototyped in a throwaway `experiments/` folder around an audio-visualizer app, then promoted to the repository root. The app was replaced by a minimal Dear ImGui window on top of the original core (definitions, configs, assertions, logger, memory, platform). How-to pages live in [`../docs/`](../docs/).
+The build-system proposals were prototyped in a throwaway `experiments/` folder around an audio-visualizer app, then promoted to the repository root. The app was replaced by a minimal Dear ImGui window on top of the original core; on 2026-10-08 that core was removed and the window moved into the `app` module on top of `src/ez/`. How-to pages live in [`../docs/`](../docs/).
 
 Results measured during the experiment on Linux (Clang 19, mold, ccache); macOS and Windows scripts are written but not yet run:
 
@@ -227,4 +227,5 @@ Corrections it caused are marked in [`build-system.md`](./build-system.md) (B-14
 6. Plugin SDK surface; the plugin UI table follows the widget vocabulary (U-8).
 7. Networking and show-output transports.
 8. Errors and crash reporting: exceptions off, status codes, in-process crash handler, assertion tiers (brainstormed 2026-10-08, not yet written up).
-9. Platform module: clock, paths, threads, process; the logger and cvars carry stubs for these until it exists.
+9. Platform module: clock, paths, threads, process; the logger, cvars and app carry stubs for these until it exists.
+10. Window, render and ui modules, which replace the placeholder shell in `app`.

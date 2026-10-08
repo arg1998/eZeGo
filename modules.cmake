@@ -7,3 +7,5 @@
 ez_declare_module(base      0      ""                     "types, platform detection, macros, assertions, strings, hashing, the module table")
 ez_declare_module(cvars     0      "base"                 "runtime variables: registry, validation, startup sources, persistence, console")
 ez_declare_module(log       0      "base;cvars"           "logging: per-thread rings, log thread, sinks, categories, runtime levels")
+ez_declare_module(metrics   0      "base;log"             "instrumentation facade: profiler zones and frames (Tracy in profile builds); always-on metrics later")
+ez_declare_module(app       3      "base;cvars;log;metrics" "the application: wiring, main loop, and for now a placeholder shell (window, Dear ImGui)")

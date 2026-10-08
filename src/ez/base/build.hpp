@@ -4,6 +4,9 @@
 // CMake build, so every macro is always defined and -Wundef stays quiet.
 #pragma once
 
+#include "ez/base/detect.h"
+#include "ez/base/macros.hpp"
+
 #ifndef EZ_ASSERTS
     #define EZ_ASSERTS 1
 #endif
@@ -26,9 +29,21 @@
     #define EZ_MODE_NAME "unknown"
 #endif
 
+#if EZ_COMPILER_CLANG
+    #define EZ_DETAIL_COMPILER_STRING "clang " __clang_version__
+#elif EZ_COMPILER_MSVC
+    #define EZ_DETAIL_COMPILER_STRING "msvc " EZ_STRINGIFY(_MSC_VER)
+#else
+    #define EZ_DETAIL_COMPILER_STRING "gcc " __VERSION__
+#endif
+
 namespace ez {
 
 inline constexpr const char* build_version = EZ_VERSION_STR;
 inline constexpr const char* build_mode = EZ_MODE_NAME;
+// For --version, the about screen and crash reports.
+inline constexpr const char* build_compiler = EZ_DETAIL_COMPILER_STRING;
+inline constexpr const char* build_os = EZ_OS_LINUX ? "Linux" : EZ_OS_MACOS ? "macOS" : "Windows";
+inline constexpr const char* build_arch = EZ_ARCH_X64 ? "x86-64" : "arm64";
 
 }  // namespace ez

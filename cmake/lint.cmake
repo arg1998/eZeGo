@@ -5,9 +5,6 @@
 #
 # Both are set by the `check` preset only. Locally, clangd shows the same clang-tidy findings
 # inline while typing, and the compiler reports warnings without stopping the build.
-#
-# Legacy code (the prototype under src/core and src/application) is exempt: its directories set
-# EZ_LEGACY before declaring targets. It is replaced, not renamed (naming.md §14).
 
 option(EZ_LINT "Run clang-tidy as part of the build (check preset)" OFF)
 option(EZ_WERROR "Treat warnings as errors (check preset)" OFF)
@@ -29,11 +26,8 @@ if(EZ_LINT)
   message(STATUS "eZeGo lint: clang-tidy ${_ez_tidy_major} (${_ez_tidy}) on first-party targets")
 endif()
 
-# Strict warnings, clang-tidy and -Werror for one first-party target. No-op for legacy targets.
+# Strict warnings, clang-tidy and -Werror for one first-party target.
 function(ez_strict target)
-  if(EZ_LEGACY)
-    return()
-  endif()
   # N-7: -Wundef turns a misspelled feature macro in #if into a warning instead of a silent 0;
   # -Wreserved-identifier catches names the implementation owns (__X, _Capital).
   target_compile_options(${target} PRIVATE -Wundef -Wreserved-identifier)

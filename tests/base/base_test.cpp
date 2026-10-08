@@ -27,6 +27,11 @@ TEST_CASE("base: build information comes from the preset") {
     CHECK(std::strlen(ez::build_version) > 0);
     const std::string_view mode = ez::build_mode;
     CHECK((mode == "debug" || mode == "profile" || mode == "release"));
+    CHECK(std::strlen(ez::build_compiler) > 4);
+    const std::string_view os = ez::build_os;
+    CHECK((os == "Linux" || os == "macOS" || os == "Windows"));
+    const std::string_view arch = ez::build_arch;
+    CHECK((arch == "x86-64" || arch == "arm64"));
 }
 
 TEST_CASE("base: count_of counts array elements") {

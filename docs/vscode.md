@@ -21,7 +21,7 @@ Personal preferences go in your user settings, not in the tracked `.vscode/setti
 ### If you see red squiggles everywhere
 
 clangd has no compile database yet. Run `./ez init` (or configure any preset), then
-**clangd: Restart language server** from the command palette. `clangd --check=src/application/main.cpp`
+**clangd: Restart language server** from the command palette. `clangd --check=src/apps/ezego/main.cpp`
 in a terminal shows exactly what clangd sees.
 
 ## Everything without a terminal

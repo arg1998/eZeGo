@@ -1,9 +1,8 @@
-set(EZ_LEGACY ON)   # prototype code, exempt from naming lint (cmake/lint.cmake)
-
-# The GUI application: the only target that sees GLFW and Dear ImGui.
-ez_executable(ezego
-  SOURCES application.hpp application.cpp main.cpp ${EZ_CORE_EXE_SOURCES}
-  DEPS ez::core imgui glfw)
+# The eZeGo application executable: main() only; everything else is in modules (CO-6).
+ez_executable(ezego SOURCES main.cpp DEPS ez::app)
+if(TARGET ez_metrics_new_hooks)
+  target_link_libraries(ezego PRIVATE ez_metrics_new_hooks)  # profile builds: operator new hooks
+endif()
 
 # Assets next to the binary, refreshed on every build.
 add_custom_command(TARGET ezego POST_BUILD

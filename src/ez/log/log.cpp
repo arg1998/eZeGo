@@ -2,6 +2,7 @@
 // thread, rendering and the sinks.
 #include "ez/log/log.hpp"
 
+#include "ez/base/assert.hpp"
 #include "ez/base/fixed_string.hpp"
 #include "ez/cvars/registry.hpp"
 #include "ez/log/detail/os.hpp"
@@ -680,6 +681,53 @@ void detail::emit_rt(Category c, Level level, const char* literal, u64 value) no
     slot->ring.commit(h);
 }
 
+namespace {
+
+// Writes a line now, on the calling thread, after everything already queued: the profiler hook,
+// a drain of every ring, then the line to every sink, then flushes. For fatal lines and failed
+// assertions, where the process may end next.
+void write_urgent(Level level, Category c, const char* file, u32 line, const char* text, usize length) noexcept {
+    if (const ProfilerHook hook = g_state.profiler.load(std::memory_order_relaxed)) {
+        hook(text, length, level);
+    }
+    if (!g_state.running.load(std::memory_order_acquire)) {
+        write_direct(level, c, file, line, text, length);
+        return;
+    }
+    const std::lock_guard<std::mutex> drain(g_state.drain_mutex);
+    drain_all();
+    Line l{};
+    l.level = level;
+    l.category = c;
+    l.ticks = now_ticks();
+    l.frame = g_state.frame.load(std::memory_order_relaxed);
+    l.thread = t_slot.slot != nullptr ? t_slot.slot->name.c_str() : "-";
+    l.file = file;
+    l.line = line;
+    l.text = text;
+    l.length = length;
+    deliver(l, true);
+    stderr_flush();
+    if (g_state.file != nullptr) {
+        std::fflush(g_state.file);
+    }
+}
+
+// Installed as the base assert handler while the logger runs (specs/base.md BA-4): a failed
+// assertion is written after every pending line, so what led up to it is not lost in the rings.
+ez::AssertHandler g_previous_assert_handler = nullptr;
+
+void assert_handler(const ez::AssertInfo& info) {
+    char text[1024];
+    const int n = info.message[0] != '\0'
+                      ? std::snprintf(text, sizeof(text), "assertion failed: %s (%s)", info.expression, info.message)
+                      : std::snprintf(text, sizeof(text), "assertion failed: %s", info.expression);
+    write_urgent(Level::Fatal, Category::base, info.file, info.line, text,
+                 n < 0 ? 0 : std::min(usize(n), sizeof(text) - 1));
+}
+
+}  // namespace
+
 void detail::fatal(Category c, const char* file, u32 line, const char* text) noexcept {
     const usize length = std::strlen(text);
     if (t_in_fatal) {  // fatal while handling fatal: write and stop
@@ -687,32 +735,7 @@ void detail::fatal(Category c, const char* file, u32 line, const char* text) noe
         std::abort();
     }
     t_in_fatal = true;
-    if (const ProfilerHook hook = g_state.profiler.load(std::memory_order_relaxed)) {
-        hook(text, length, Level::Fatal);
-    }
-    // Drain everything committed so far, so the lines leading up to the failure are written first.
-    if (g_state.running.load(std::memory_order_acquire)) {
-        const std::lock_guard<std::mutex> drain(g_state.drain_mutex);
-        drain_all();
-        Line l{};
-        l.level = Level::Fatal;
-        l.category = c;
-        l.ticks = now_ticks();
-        l.frame = g_state.frame.load(std::memory_order_relaxed);
-        l.thread = t_slot.slot != nullptr ? t_slot.slot->name.c_str() : "-";
-        l.file = file;
-        l.line = line;
-        l.text = text;
-        l.length = length;
-        g_state.sync.store(false, std::memory_order_relaxed);
-        deliver(l, true);
-        stderr_flush();
-        if (g_state.file != nullptr) {
-            std::fflush(g_state.file);
-        }
-    } else {
-        write_direct(Level::Fatal, c, file, line, text, length);
-    }
+    write_urgent(Level::Fatal, c, file, line, text, length);
     if (const FatalHook hook = g_state.fatal.load(std::memory_order_acquire)) {
         hook(text, length);
     }
@@ -798,6 +821,7 @@ bool init(cvars::Registry& registry) noexcept {
     g_state.thread = std::thread(&log_thread_main);
 
     registry.set_report_hook(&cvars_report, nullptr);  // delivers what cvars buffered at startup
+    g_previous_assert_handler = set_assert_handler(&assert_handler);
     if (t_slot.slot == nullptr || t_slot.epoch != g_state.epoch.load()) {
         register_thread("main");
     }
@@ -811,6 +835,7 @@ void shutdown() noexcept {
     if (g_state.registry != nullptr) {
         g_state.registry->set_report_hook(nullptr, nullptr);
     }
+    set_assert_handler(g_previous_assert_handler);
     {
         const std::lock_guard<std::mutex> lock(g_state.mutex);
         g_state.stop = true;

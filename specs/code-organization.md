@@ -1,6 +1,6 @@
 # eZeGo — Code Organization
 
-> **Status:** Accepted, 2026-10-08. **Being applied**: `modules.cmake`, `src/ez/` and the per-module tests exist from 2026-10-08; `src/core/` and `src/application/` are the prototype's until replaced. Decision IDs (`CO-n`) are indexed in [`README.md`](./README.md).
+> **Status:** Accepted and applied, 2026-10-08: `modules.cmake`, `src/ez/` with base, cvars, log, metrics and app, `src/apps/ezego/`, and per-module tests. The prototype (`src/core/`, `src/application/`) was removed the same day. Decision IDs (`CO-n`) are indexed in [`README.md`](./README.md).
 > **Companions:** [`application-architecture.md`](./application-architecture.md) §2 (the layers this tree implements) · [`build-system.md`](./build-system.md) B-9, B-12 · [`naming.md`](./naming.md) N-2, N-3, N-8 · [`linking.md`](./linking.md) L-6 · [`plugins.md`](./plugins.md)
 > **Scope:** where code lives: the repository tree, the inside of a module, the rules that keep the tree stable while the domain and the UX are still open, the module inventory, and how the tree grows. What a module does is its own spec's business.
 
@@ -69,7 +69,9 @@ A module has an explicit source list (B-9), one namespace that is its directory 
 | **CO-8** | **`modules.cmake` is the single module table:** name, layer, dependencies, one-line description. CMake creates the targets from it and generates `ez/base/modules.gen.hpp`, the X-macro behind log categories, cvar prefixes and memory tags. The lint script checks that directories, namespaces and targets match it. | The six places that must agree ([`naming.md`](./naming.md) N-3) collapse into one file. Fallback if generation ever feels like too much: a hand-written header that the lint script cross-checks against CMake. |
 | **CO-9** | **`src/ez/base/` maps to namespace `ez` itself**, not `ez::base`: `ez::u32`, `ez::Handle`, `ez::Status`, `ez::Pool`. It is the one exception to N-2 and is written into that rule. | The primitives read as the language of the codebase rather than as a module's exports. |
 
-The prototype's `src/core/` and `src/application/` are removed as `src/ez/` lands; nothing is built on them. `experiments/` is for throwaway prototypes and is not part of the build.
+The prototype's `src/core/` and `src/application/` were removed on 2026-10-08; what they did lives in `base`, `log`, `metrics` and `app`. `experiments/` is for throwaway prototypes and is not part of the build.
+
+**One documented exception.** Until the `window`, `render` and `ui` modules are designed, `app` holds a placeholder shell (`src/ez/app/detail/shell.cpp`): one GLFW window with Dear ImGui and an information panel. It is the only code that calls GLFW or ImGui directly, which [`ui-system.md`](./ui-system.md) U-1 otherwise forbids; it is replaced, not extended, when those modules exist.
 
 ---
 
@@ -85,7 +87,7 @@ The prototype's `src/core/` and `src/application/` are removed as `src/ez/` land
 | 0 | `log` | Logging | true, [`logging.md`](./logging.md) |
 | 0 | `cvars` | Runtime variables | true, [`cvars.md`](./cvars.md) |
 | 0 | `crash` | Status codes, assertion tiers, the crash and hang reporter | false |
-| 0 | `metrics` | Always-on telemetry, the instrumentation facade, the Tracy backend behind it | true, [`observability.md`](./observability.md) |
+| 0 | `metrics` | Always-on telemetry, the instrumentation facade, the Tracy backend behind it. Today: the profiler half (`EZ_PROF_*`) and the profile-only `operator new` hooks | true, [`observability.md`](./observability.md) |
 | 1 | `engine` | The loop, evaluation, the layer compositor | false |
 | 1 | `state` | Handle and POD pools, commands and undo | false |
 | 1 | `timebase` | Transport and show-time over the reference clock | false |
@@ -99,7 +101,7 @@ The prototype's `src/core/` and `src/application/` are removed as `src/ez/` land
 | 3 | `plugin` | Host side: loader, registry, the host table | true, [`plugins.md`](./plugins.md) |
 | 3 | `nodes` | The node-graph runtime | false |
 | 3 | `lighting` | The lighting domain | false |
-| 3 | `app` | Wiring, screens, the application object | false |
+| 3 | `app` | Wiring, screens, the application object. Today: the main loop, the app cvars, and the placeholder shell | false; exists as a placeholder (§3) |
 
 ---
 

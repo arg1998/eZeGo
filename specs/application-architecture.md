@@ -133,7 +133,7 @@ Everything OS-specific sits behind a **capability-based** interface that *exploi
 
 | Concern | Abstraction | Notes |
 |---|---|---|
-| **Entry** | `PLATFORM_MAIN()` per OS | Already present |
+| **Entry** | A plain `main()` in `src/apps/<name>/main.cpp` that wires modules ([`code-organization.md`](./code-organization.md) CO-6); `WinMain` and app-bundle entries come with packaging | Present |
 | **Memory** | platform alloc / aligned alloc → memory system | Thin wrappers today; expands with use |
 | **Clock** | monotonic, ns-resolution reference clock | **Linux impl is currently a stub — first foundation task** |
 | **Windowing** | `Window`/`Display` over **GLFW** | OS-native frames/title bars; multi-window, multi-monitor, DPI. *Nothing else in the app talks to GLFW directly* — so custom chrome or an SDL3 swap is a one-module change |
@@ -141,7 +141,7 @@ Everything OS-specific sits behind a **capability-based** interface that *exploi
 | **Hardware comms** | USB / WiFi / Bluetooth transports | Higher protocols (e.g. MIDI) built atop these; see §6 |
 | **Console / logging sink** | per-OS | ANSI on Linux/mac, console API on Windows |
 
-**Compiler / arch / OS detection** lives in `src/core/definitions.hpp` (fixed-size primitive types with static asserts, build/arch/compiler/OS macros, branch-hint macros). Current stances:
+**Compiler / arch / OS detection** lives in `src/ez/base/detect.h`, primitive types in `types.hpp`, attribute macros in `macros.hpp` ([`base.md`](./base.md)). Current stances:
 
 - **64-bit only** (enforced).
 - **Clang-primary**, including **clang-cl on Windows** for one toolchain across all platforms; MSVC supported as fallback. *(GCC currently hard-errored — softening is open.)*

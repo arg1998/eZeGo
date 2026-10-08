@@ -33,24 +33,25 @@ function(ez_warnings target)
     target_compile_options(${target} PRIVATE -Wall -Wextra -Wpedantic -Wshadow
       -Wno-missing-field-initializers -Wno-gnu-zero-variadic-macro-arguments)
   endif()
-  ez_strict(${target})   # cmake/lint.cmake: stricter flags, clang-tidy, -Werror; skipped for legacy
+  ez_strict(${target})   # cmake/lint.cmake: stricter flags, clang-tidy, -Werror
 endfunction()
 
 # ez_module(<name> SOURCES ... [PRIVATE_DEPS ...])
 # Explicit source lists, no globbing: the build always knows every file.
 #
-# For a module in modules.cmake, <name> is the table name (`log`): the target is ez_log, its
+# <name> is the module's name in modules.cmake (`log`): the target is ez_log with alias ez::log, its
 # first-party dependencies and layer come from the table, and PRIVATE_DEPS is only for third-party
-# libraries. The prototype under src/core still passes a full target name and PUBLIC_DEPS.
+# libraries.
 function(ez_module name)
-  cmake_parse_arguments(M "" "" "SOURCES;PUBLIC_DEPS;PRIVATE_DEPS" ${ARGN})
-  if(name IN_LIST EZ_MODULES)
-    set(_table_name "${name}")
-    set(name "ez_${name}")
-    foreach(d IN LISTS EZ_MODULE_${_table_name}_DEPS)
-      list(APPEND M_PUBLIC_DEPS ez::${d})
-    endforeach()
+  cmake_parse_arguments(M "" "" "SOURCES;PRIVATE_DEPS" ${ARGN})
+  if(NOT name IN_LIST EZ_MODULES)
+    message(FATAL_ERROR "ez_module(${name}): '${name}' is not in modules.cmake (code-organization.md CO-8)")
   endif()
+  set(_table_name "${name}")
+  set(name "ez_${name}")
+  foreach(d IN LISTS EZ_MODULE_${_table_name}_DEPS)
+    list(APPEND M_PUBLIC_DEPS ez::${d})
+  endforeach()
   add_library(${name} STATIC ${M_SOURCES})
   if(_table_name)
     set_target_properties(${name} PROPERTIES EZ_LAYER "${EZ_MODULE_${_table_name}_LAYER}")

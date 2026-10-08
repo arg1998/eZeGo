@@ -43,16 +43,17 @@ Each preset has its own build tree under `build/`, so switching modes never need
 ```
 specs/                design intent and decisions (start at specs/README.md)
 docs/                 contributor how-to: build, profiling, dependencies, tools, VS Code
-src/core/             definitions, configs, assertions, logger, memory, platform, profiler facade
-src/application/      window, Dear ImGui setup, main loop
-tests/                ctest suites (labels: unit, smoke, gpu)
+modules.cmake         the module table: every module, its layer and dependencies
+src/ez/<module>/      one directory per module: base, cvars, log, metrics, app (specs/code-organization.md)
+src/apps/ezego/       the executable: main() only
+tests/<module>/       doctest suites per module; tests/bench/ micro-benchmarks; tests/support/ helpers
 assets/               fonts and other runtime files (copied next to the binary)
 dependencies.json     every third-party library and dev tool, pinned to a commit
 CMakePresets.json     the build modes
 cmake/                build logic: modes, toolchain, dependency check, target helpers
 third_party/*.cmake   how each dependency is built
 tools/*.cmake         dev-tool recipes (Tracy)
-scripts/              doctor, init, deps, tools, profile, run, vscode (+ per-OS parts)
+scripts/              doctor, init, deps, tools, lint, bench, profile, run, vscode (+ per-OS parts)
 ez, ez.cmd            optional launcher
 ```
 

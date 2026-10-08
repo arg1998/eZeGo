@@ -1,3 +1,4 @@
+#include "ez/base/assert.hpp"
 #include "support/subprocess.hpp"
 
 #include <doctest/doctest.h>
@@ -162,6 +163,26 @@ TEST_CASE("log: fatal writes everything pending, then its own line, then ends th
     CHECK(fatal != std::string::npos);
     CHECK(before < fatal);
 }
+
+#if EZ_ASSERTS
+EZ_TEST_SUBPROCESS(log_assert) {
+    LogSession session({"--log.color=off", "--log.drain_ms=1000"});
+    EZ_LOG_INFO(log, "queued before the assert");
+    EZ_ASSERT_MSG(argc == 100, "argc is never 100");
+    return 0;
+}
+
+TEST_CASE("log: a failed assert writes the pending lines, then the assertion, through the logger") {
+    const ProcessResult r = run_subprocess("log_assert");
+    CHECK_FALSE(r.exited_normally());
+    const usize before = r.output.find("queued before the assert");
+    const usize assertion =
+        r.output.find("  F  base         main       assertion failed: argc == 100 (argc is never 100)");
+    CHECK(before != std::string::npos);
+    CHECK(assertion != std::string::npos);
+    CHECK(before < assertion);
+}
+#endif
 
 EZ_TEST_SUBPROCESS(log_sync) {
     LogSession session({"--log.sync=on", "--log.color=off", "--log.drain_ms=1000"});

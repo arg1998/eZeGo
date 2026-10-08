@@ -13,7 +13,6 @@ foreach(_m IN LISTS EZ_MODULES)
 endforeach()
 
 add_subdirectory(bench)
-add_subdirectory(legacy)
 
 # Lint as a test in the check tree only (naming.md N-13): layout rules and formatting. clang-tidy
 # already ran as part of this tree's build, so it is skipped here.
@@ -26,7 +25,7 @@ endif()
 add_test(NAME smoke_app_version COMMAND ezego --version)
 set_tests_properties(smoke_app_version PROPERTIES LABELS smoke PASS_REGULAR_EXPRESSION "eZeGo [0-9]+\\.[0-9]+\\.[0-9]+")
 
-# GUI smoke: opens a window for 3 s. Needs a display and GPU, so it is labelled "gpu" and
-# excluded by the test presets. Run explicitly: ctest --preset debug -L gpu
-add_test(NAME smoke_gui_starts COMMAND ezego --quit-after 3)
+# GUI smoke (testing.md T-7): opens the window, draws 120 frames, exits 0. Needs a display and a
+# GPU, so it is labelled "gpu" and excluded by the test presets: ctest --preset debug -L gpu
+add_test(NAME smoke_gui_starts COMMAND ezego --app.quit_after_frames=120 --log.file=off)
 set_tests_properties(smoke_gui_starts PROPERTIES LABELS "gpu;smoke")

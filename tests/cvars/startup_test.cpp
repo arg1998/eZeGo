@@ -149,6 +149,26 @@ TEST_CASE("cvars: --help writes generated help and asks to exit with 0") {
     CHECK(help.find("--cvars.test.backend=<auto|alsa|pulse>  default auto, startup") != std::string::npos);
 }
 
+TEST_CASE("cvars: --version prints the given line and asks to exit with 0") {
+    auto r = make_registry();
+    std::string out;
+    Args args{"--version"};
+    const cvars::StartupResult res = r->init({.argc = args.argc(),
+                                              .argv = args.data(),
+                                              .settings_path = "",
+                                              .help_out = string_writer(out),
+                                              .version_text = "eZeGo 1.2.3"});
+    CHECK(res.exit_now);
+    CHECK(res.exit_code == 0);
+    CHECK(out == "eZeGo 1.2.3\n");
+}
+
+TEST_CASE("cvars: without a version text, --version is an unknown option") {
+    auto r = make_registry();
+    const cvars::StartupResult res = start(*r, Args{"--version"}, "");
+    CHECK_FALSE(res.ok);
+}
+
 TEST_CASE("cvars: --reset-settings sets a bad file aside and starts with defaults") {
     TempDir dir("reset_settings");
     const std::string file = dir.write("settings.cfg", "cvars.test.drain_ms = 9999\n").string();

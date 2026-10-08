@@ -8,7 +8,7 @@ Checks: >
   google-build-using-namespace,
   misc-anonymous-namespace-in-header,
   bugprone-reserved-identifier
-HeaderFilterRegex: '.*/(src/ez|tests|sdk)/.*'
+HeaderFilterRegex: '.*/(src/ez|src/apps|src/tools|tests|sdk|plugins)/.*'
 CheckOptions:
   # N-1, N-2: namespaces
   readability-identifier-naming.NamespaceCase: lower_case
