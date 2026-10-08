@@ -1,6 +1,6 @@
 # eZeGo — Testing
 
-> **Status:** Proposed, 2026-10-08. **Not implemented.** Decisions are *proposed* until confirmed. Decision IDs (`T-n`) are indexed in [`README.md`](./README.md).
+> **Status:** Accepted, 2026-10-08, with doctest. **Phase 1 implemented 2026-10-08**: doctest, `ez_test()`, per-case discovery, `tests/support/` (subprocess runner, temp directory); how-to in [`../docs/testing.md`](../docs/testing.md). Later phases are not implemented. Decision IDs (`T-n`) are indexed in [`README.md`](./README.md).
 > **Companions:** [`build-system.md`](./build-system.md) B-3 (sanitizer presets), B-12 (tests through CTest) · [`code-organization.md`](./code-organization.md) CO-5 · [`naming.md`](./naming.md) N-8 · [`observability.md`](./observability.md) §7 (regression pipeline) · [`application-architecture.md`](./application-architecture.md) §3.2, §8 · [`philosophy.md`](./philosophy.md) §3.4, §4
 > **Scope:** every kind of test eZeGo will have, which ones exist now, how a developer runs them, the framework and the few purpose-built harnesses, and the strategy for hardware. Continuous integration, the performance reference machine and the hardware bench are **deferred** (§12): all development is local for now and GitHub only hosts the source.
 
@@ -41,7 +41,7 @@ Three kinds deserve a sentence on why they exist for a live-show tool. **Scenari
 
 | Phase | What | Arrives with | Status |
 |---|---|---|---|
-| **1** | Framework, `ez test`, unit and integration, the support library, the subprocess harness, labels | The first modules: base, cvars, log | **Now** |
+| **1** | Framework, `ez test`, unit and integration, the support library, the subprocess harness, labels | The first modules: base, cvars, log | **Done 2026-10-08** |
 | 2 | Smoke through a `--smoke` flag; sanitizer runs through the existing presets | The first window | Next |
 | 3 | Fuzz targets and `ez fuzz` | The first parsers: settings file, project file | When they exist |
 | 4 | Bench as a feature: micro-benchmarks, `ez bench`, local history | The logger and cvars, whose specs promise numbers | With phase 1 or 2, as a toy to learn from |
@@ -102,7 +102,7 @@ tests/
 |---|---|
 | One executable per module | `ez_test_<module>`, linking that module and nothing above it. A one-file edit relinks one small binary. Headless testability stays a link-time fact (B-9). |
 | One support library | `ez_test_support` holds doctest's implementation compiled once, so test files include a header and nothing else. |
-| Registration | `ez_test(<module> SOURCES ... LABELS ...)` in `cmake/`, wrapping `add_executable`, the support link, exceptions on, and CTest registration per test case through doctest's discovery script, so VS Code's Test Explorer shows cases, not binaries. |
+| Registration | `ez_test(<module> SOURCES ... [LABEL ...])` in `cmake/testing.cmake`, wrapping `add_executable` and the support link, and registering one CTest test per doctest case through our own discovery script, `cmake/test_discovery.cmake`, so VS Code's Test Explorer shows cases, not binaries. *(doctest's own discovery script was not used: it overwrites labels with suite names and starts one process per case to learn them.)* |
 | Labels | Default label from the directory: `tests/<module>/` is `unit`, `tests/integration/` is `integration`. A file that holds integration tests for one module declares `TEST_SUITE("integration")`; the suite name overrides the label. |
 | Build | Tests build in every mode's tree (B-12). `ez test <mode>` runs the tests of that tree; `ez test` means the `debug` tree. |
 | Temp files | Every test that touches the filesystem gets its own directory from the support library, under the build tree, removed on success and kept on failure. |

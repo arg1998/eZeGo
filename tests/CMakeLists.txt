@@ -1,14 +1,16 @@
-# Tests are part of the main project (B-12). Unit tests link headless modules only: nothing here
-# can see GLFW, ImGui or a GPU. Labels: unit, smoke (and gpu, excluded by the presets).
+# Tests are part of the main project (B-12, specs/testing.md). They link headless modules only:
+# nothing here can see GLFW, ImGui or a GPU. One executable per module (ez_test, cmake/testing.cmake),
+# one CTest test per doctest case. Labels: unit, integration, smoke, lint; gpu is excluded by the
+# presets and runs with `ctest --preset debug -L gpu`.
 
-function(ez_test name)
-  cmake_parse_arguments(T "" "" "SOURCES;DEPS;LABELS" ${ARGN})
-  ez_executable(${name} SOURCES ${T_SOURCES} DEPS ${T_DEPS})
-  set_target_properties(${name} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/tests")
-  target_include_directories(${name} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
-  add_test(NAME ${name} COMMAND ${name})
-  set_tests_properties(${name} PROPERTIES LABELS "${T_LABELS}")
-endfunction()
+add_subdirectory(support)
+
+# One directory per module, mirroring src/ez/ (CO-5), in module-table order.
+foreach(_m IN LISTS EZ_MODULES)
+  if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${_m}/CMakeLists.txt")
+    add_subdirectory(${_m})
+  endif()
+endforeach()
 
 add_subdirectory(legacy)
 
@@ -24,6 +26,6 @@ add_test(NAME smoke_app_version COMMAND ezego --version)
 set_tests_properties(smoke_app_version PROPERTIES LABELS smoke PASS_REGULAR_EXPRESSION "eZeGo [0-9]+\\.[0-9]+\\.[0-9]+")
 
 # GUI smoke: opens a window for 3 s. Needs a display and GPU, so it is labelled "gpu" and
-# excluded by the test presets. Run explicitly: ctest --test-dir build/debug -L gpu
+# excluded by the test presets. Run explicitly: ctest --preset debug -L gpu
 add_test(NAME smoke_gui_starts COMMAND ezego --quit-after 3)
 set_tests_properties(smoke_gui_starts PROPERTIES LABELS "gpu;smoke")

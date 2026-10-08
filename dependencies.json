@@ -27,6 +27,18 @@
       "why": "Native windows, input, GL context; custom allocator hook (glfwInitAllocator)"
     },
     {
+      "name": "doctest",
+      "version": "2.4.12",
+      "url": "https://github.com/doctest/doctest.git",
+      "ref": "v2.4.12",
+      "commit": "1da23a3e8119ec5cce4f9388e91b065e20bf06f5",
+      "license": "MIT",
+      "used_by": [
+        "tests"
+      ],
+      "why": "Test framework: one header, the fastest-compiling of the common frameworks, per-case CTest discovery (specs/testing.md T-1)"
+    },
+    {
       "name": "tracy",
       "version": "0.14.1",
       "url": "https://github.com/wolfpld/tracy.git",

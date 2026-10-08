@@ -89,7 +89,7 @@ The lint script checks that a directory, a namespace and a target exist for ever
 
 ### 4.1 Primitive aliases, the one exception
 
-The fixed-width aliases are spelled like built-in types because they are used like them: `u8 u16 u32 u64 i8 i16 i32 i64 f32 f64 b8 usize`. They live directly in `ez`. They are the only lowercase type names and are listed by name in the `clang-tidy` exception (§13). `i32` replaces the prototype's `s32`: `i` for integer is what Rust, Zig and most engines use, and `s` has no meaning outside this codebase (open question §15.1).
+The fixed-width aliases are spelled like built-in types because they are used like them: `u8 u16 u32 u64 i8 i16 i32 i64 f32 f64 b8 usize isize`. They live directly in `ez`. They are the only lowercase type names and are listed by name in the `clang-tidy` exception (§13). `i32` replaces the prototype's `s32`: `i` for integer is what Rust, Zig and most engines use, and `s` has no meaning outside this codebase (open question §15.1).
 
 ### 4.2 Role suffixes (guideline)
 
@@ -292,7 +292,7 @@ CheckOptions:
   readability-identifier-naming.EnumCase:               CamelCase
   readability-identifier-naming.EnumConstantCase:       CamelCase
   readability-identifier-naming.TypeAliasCase:          CamelCase
-  readability-identifier-naming.TypeAliasIgnoredRegexp: '^(u8|u16|u32|u64|i8|i16|i32|i64|f32|f64|b8|usize)$'
+  readability-identifier-naming.TypeAliasIgnoredRegexp: '^(u8|u16|u32|u64|i8|i16|i32|i64|f32|f64|b8|usize|isize)$'
   readability-identifier-naming.ConceptCase:            CamelCase
   readability-identifier-naming.TemplateParameterCase:  CamelCase
   readability-identifier-naming.FunctionCase:           lower_case

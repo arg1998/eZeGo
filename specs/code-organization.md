@@ -1,6 +1,6 @@
 # eZeGo — Code Organization
 
-> **Status:** Proposed, 2026-10-08. **Not applied yet**: the tree below does not exist; `src/core/` and `src/application/` are the prototype's. Decisions are *proposed* until confirmed. Decision IDs (`CO-n`) are indexed in [`README.md`](./README.md).
+> **Status:** Accepted, 2026-10-08. **Being applied**: `modules.cmake`, `src/ez/` and the per-module tests exist from 2026-10-08; `src/core/` and `src/application/` are the prototype's until replaced. Decision IDs (`CO-n`) are indexed in [`README.md`](./README.md).
 > **Companions:** [`application-architecture.md`](./application-architecture.md) §2 (the layers this tree implements) · [`build-system.md`](./build-system.md) B-9, B-12 · [`naming.md`](./naming.md) N-2, N-3, N-8 · [`linking.md`](./linking.md) L-6 · [`plugins.md`](./plugins.md)
 > **Scope:** where code lives: the repository tree, the inside of a module, the rules that keep the tree stable while the domain and the UX are still open, the module inventory, and how the tree grows. What a module does is its own spec's business.
 
@@ -42,7 +42,7 @@ Layers are the ones in [`application-architecture.md`](./application-architectur
 
 ```text
 src/ez/log/
-├─ CMakeLists.txt        ez_module(ez_log LAYER 0 SOURCES ... DEPS ez::base ez::platform ez::cvars)
+├─ CMakeLists.txt        ez_module(log SOURCES ...): layer and dependencies come from the table
 ├─ log.hpp  log.cpp      every .hpp at this level is the module's public API
 ├─ categories.hpp
 ├─ sink_console.cpp  sink_file.cpp
@@ -79,7 +79,7 @@ The prototype's `src/core/` and `src/application/` are removed as `src/ez/` land
 
 | Layer | Module | Responsibility | Has spec |
 |---|---|---|---|
-| 0 | `base` | Types, platform detection, macros, handles, result, containers, the module table | false |
+| 0 | `base` | Types, platform detection, macros, assertions, strings, hashing, the module table | true, [`base.md`](./base.md) |
 | 0 | `platform` | Clock, paths, filesystem, threads, process, dynamic loader, console, message box | false |
 | 0 | `mem` | The memory system: tags, arenas, pools, platform capabilities | false |
 | 0 | `log` | Logging | true, [`logging.md`](./logging.md) |

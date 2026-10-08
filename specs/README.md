@@ -18,8 +18,9 @@ This folder (`specs/`, formerly `.agent/`) holds the design intent for eZeGo. St
 | [`logging.md`](./logging.md) | Log API, levels, categories, per-thread rings and log thread, sinks, runtime control, costs | **Proposed 2026-10-08, not implemented** |
 | [`cvars.md`](./cvars.md) | Runtime variables: one registry, zero-cost reads, mutability, validation, persistence, tiers and developer mode, console and panel | **Proposed 2026-10-08, not implemented** |
 | [`naming.md`](./naming.md) | Naming and namespaces: three shapes, prefixes and suffixes, files, registry names, the C SDK mapping, enforcement by clang-tidy and a lint script | **Accepted and enforced 2026-10-08** |
-| [`code-organization.md`](./code-organization.md) | The repository tree, the inside of a module, the module table, the module inventory, how the tree grows | **Proposed 2026-10-08, not applied** |
-| [`testing.md`](./testing.md) | Every kind of test, the phased rollout, doctest plus small purpose harnesses, the developer contract, fakes, hardware tiers; CI and reference machines deferred | **Proposed 2026-10-08, not implemented** |
+| [`code-organization.md`](./code-organization.md) | The repository tree, the inside of a module, the module table, the module inventory, how the tree grows | **Accepted 2026-10-08, being applied** |
+| [`testing.md`](./testing.md) | Every kind of test, the phased rollout, doctest plus small purpose harnesses, the developer contract, fakes, hardware tiers; CI and reference machines deferred | **Accepted 2026-10-08, phase 1 implemented** |
+| [`base.md`](./base.md) | The base layer: detection, types, macros, assertion seam, fixed string, stable hash, module enum | **Accepted and implemented 2026-10-08** |
 
 ## Decision register
 
@@ -139,33 +140,43 @@ Status values: **Proposed** (written up with trade-offs, awaiting confirmation),
 
 | ID | Decision | Status |
 |---|---|---|
-| CO-1 | One directory is one module, one namespace and one static library, flat under `src/ez/`; the layer is a table column, never a path segment | Proposed |
-| CO-2 | Dependencies declared per module and checked at configure time: same or lower layer only, no cycles | Proposed |
-| CO-3 | Public API is a module's top-level headers; `detail/` is private and enforced by lint | Proposed |
-| CO-4 | Platform code by file suffix, in place, selected by CMake | Proposed |
-| CO-5 | Tests mirror the tree under `tests/<module>/` | Proposed |
-| CO-6 | Executables contain only `main`, under `src/apps/`; first-party utilities under `src/tools/` | Proposed |
-| CO-7 | The SDK lives at `sdk/` outside `src/`; first-party plugins under `plugins/` are built against it | Proposed |
-| CO-8 | `modules.cmake` is the single module table; it creates targets, checks layers and generates `modules.gen.hpp` for log categories, cvar prefixes and memory tags | Proposed |
-| CO-9 | `src/ez/base/` maps to namespace `ez` itself, the one exception to N-2 | Proposed |
+| CO-1 | One directory is one module, one namespace and one static library, flat under `src/ez/`; the layer is a table column, never a path segment | Accepted 2026-10-08 |
+| CO-2 | Dependencies declared per module and checked at configure time: same or lower layer only, no cycles | Accepted 2026-10-08 |
+| CO-3 | Public API is a module's top-level headers; `detail/` is private and enforced by lint | Accepted 2026-10-08 |
+| CO-4 | Platform code by file suffix, in place, selected by CMake | Accepted 2026-10-08 |
+| CO-5 | Tests mirror the tree under `tests/<module>/` | Accepted 2026-10-08 |
+| CO-6 | Executables contain only `main`, under `src/apps/`; first-party utilities under `src/tools/` | Accepted 2026-10-08 |
+| CO-7 | The SDK lives at `sdk/` outside `src/`; first-party plugins under `plugins/` are built against it | Accepted 2026-10-08 |
+| CO-8 | `modules.cmake` is the single module table; it creates targets, checks layers and generates `modules.gen.hpp` for log categories, cvar prefixes and memory tags | Accepted 2026-10-08 |
+| CO-9 | `src/ez/base/` maps to namespace `ez` itself, the one exception to N-2 | Accepted 2026-10-08 |
+
+### Base layer — [`base.md`](./base.md)
+
+| ID | Decision | Status |
+|---|---|---|
+| BA-1 | Base is cheap to include, depends on nothing, uses namespace `ez`, grows only when a second module needs something | Accepted and implemented 2026-10-08 |
+| BA-2 | Contents: detection, build switches, types, macros, debug assert, fixed string, stable hash, module enum | Accepted and implemented 2026-10-08 |
+| BA-3 | Detection macros always 0 or 1, in a C header shared with the SDK | Accepted and implemented 2026-10-08 |
+| BA-4 | The debug assertion has a replaceable handler, the seam for the crash reporter | Accepted and implemented 2026-10-08 |
+| BA-5 | The module table is generated into the build tree and exposed as an enum | Accepted and implemented 2026-10-08 |
 
 ### Testing — [`testing.md`](./testing.md)
 
 | ID | Decision | Status |
 |---|---|---|
-| T-1 | doctest, pinned; purpose-built harnesses only for a subprocess runner, a micro-benchmark helper, the scenario runner and fuzz targets | Proposed |
-| T-2 | Thirteen kinds of test with CTest labels, rolled out in phases; a module ships with unit, integration and a benchmark if its spec claims a cost | Proposed |
-| T-3 | One test executable per module plus a support library; `tests/<module>/`, `integration/`, `smoke/`, `scenarios/`, `fuzz/`, `bench/`, `support/` | Proposed |
-| T-4 | `ez test` runs unit and integration of the debug tree in under 30 s, headless; everything else opt-in; a missing environment means skipped, never failed | Proposed |
-| T-5 | Fakes, not mocks: virtual clock, captured log sink, counting and fault-injecting allocator, loopback transport, null audio, temp directory, virtual device pack | Proposed |
-| T-6 | Test hygiene: independent cases, random order in `check`, no sleeps or wall clock, per-label timeouts, readable sentence names, exceptions on in test files only | Proposed |
-| T-7 | Smoke through a `--smoke=<frames>` flag, label `gpu`, opt-in | Proposed |
-| T-8 | Sanitizer runs reuse the presets: `ez test asan` | Proposed |
-| T-9 | Fuzz through libFuzzer with committed corpora; crashes become regression tests | Proposed |
-| T-10 | Bench as a feature: `ez bench` on the release tree, local JSON-lines history with deltas, no gate until a reference machine exists | Proposed |
-| T-11 | Scenario tests with golden per-frame hashes, ABI tests with a second compiler, soak against the virtual rig; arrive with the engine, SDK and rig | Proposed |
-| T-12 | Hardware in four tiers: software twins beside each module, a virtual rig, firmware on the host, real devices that skip when absent | Proposed |
-| T-13 | CI, the performance reference machine and the hardware bench machine are deferred; the plan is recorded, nothing is built | Proposed |
+| T-1 | doctest, pinned; purpose-built harnesses only for a subprocess runner, a micro-benchmark helper, the scenario runner and fuzz targets | Accepted 2026-10-08 |
+| T-2 | Thirteen kinds of test with CTest labels, rolled out in phases; a module ships with unit, integration and a benchmark if its spec claims a cost | Accepted 2026-10-08 |
+| T-3 | One test executable per module plus a support library; `tests/<module>/`, `integration/`, `smoke/`, `scenarios/`, `fuzz/`, `bench/`, `support/` | Accepted 2026-10-08 |
+| T-4 | `ez test` runs unit and integration of the debug tree in under 30 s, headless; everything else opt-in; a missing environment means skipped, never failed | Accepted 2026-10-08 |
+| T-5 | Fakes, not mocks: virtual clock, captured log sink, counting and fault-injecting allocator, loopback transport, null audio, temp directory, virtual device pack | Accepted 2026-10-08 |
+| T-6 | Test hygiene: independent cases, random order in `check`, no sleeps or wall clock, per-label timeouts, readable sentence names, exceptions on in test files only | Accepted 2026-10-08 |
+| T-7 | Smoke through a `--smoke=<frames>` flag, label `gpu`, opt-in | Accepted 2026-10-08 |
+| T-8 | Sanitizer runs reuse the presets: `ez test asan` | Accepted 2026-10-08 |
+| T-9 | Fuzz through libFuzzer with committed corpora; crashes become regression tests | Accepted 2026-10-08 |
+| T-10 | Bench as a feature: `ez bench` on the release tree, local JSON-lines history with deltas, no gate until a reference machine exists | Accepted 2026-10-08 |
+| T-11 | Scenario tests with golden per-frame hashes, ABI tests with a second compiler, soak against the virtual rig; arrive with the engine, SDK and rig | Accepted 2026-10-08 |
+| T-12 | Hardware in four tiers: software twins beside each module, a virtual rig, firmware on the host, real devices that skip when absent | Accepted 2026-10-08 |
+| T-13 | CI, the performance reference machine and the hardware bench machine are deferred; the plan is recorded, nothing is built | Accepted 2026-10-08 |
 
 ## Earlier statements these proposals change
 
@@ -216,4 +227,4 @@ Corrections it caused are marked in [`build-system.md`](./build-system.md) (B-14
 6. Plugin SDK surface; the plugin UI table follows the widget vocabulary (U-8).
 7. Networking and show-output transports.
 8. Errors and crash reporting: exceptions off, status codes, in-process crash handler, assertion tiers (brainstormed 2026-10-08, not yet written up).
-9. Base layer: platform detection, common types, feature macros, the central module table (brainstormed 2026-10-08, not yet written up). Runtime variables are written up in [`cvars.md`](./cvars.md).
+9. Platform module: clock, paths, threads, process; the logger and cvars carry stubs for these until it exists.

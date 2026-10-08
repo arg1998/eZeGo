@@ -10,14 +10,17 @@ endif()
 
 include(cmake/modes.cmake)
 include(cmake/lint.cmake)
+include(cmake/modules.cmake)
 include(cmake/targets.cmake)
 include(cmake/deps.cmake)
 include(cmake/editor.cmake)
+include(cmake/testing.cmake)
 
 # ------------------------------------------------------------------ third party (B-8)
 include(third_party/glfw.cmake)
 include(third_party/imgui.cmake)
 include(third_party/tracy.cmake)
+include(third_party/doctest.cmake)
 
 # ------------------------------------------------------------------ first party (B-9)
 add_subdirectory(src)

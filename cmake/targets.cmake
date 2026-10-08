@@ -36,11 +36,28 @@ function(ez_warnings target)
   ez_strict(${target})   # cmake/lint.cmake: stricter flags, clang-tidy, -Werror; skipped for legacy
 endfunction()
 
-# ez_module(<name> SOURCES ... [PUBLIC_DEPS ...] [PRIVATE_DEPS ...])
+# ez_module(<name> SOURCES ... [PRIVATE_DEPS ...])
 # Explicit source lists, no globbing: the build always knows every file.
+#
+# For a module in modules.cmake, <name> is the table name (`log`): the target is ez_log, its
+# first-party dependencies and layer come from the table, and PRIVATE_DEPS is only for third-party
+# libraries. The prototype under src/core still passes a full target name and PUBLIC_DEPS.
 function(ez_module name)
   cmake_parse_arguments(M "" "" "SOURCES;PUBLIC_DEPS;PRIVATE_DEPS" ${ARGN})
+  if(name IN_LIST EZ_MODULES)
+    set(_table_name "${name}")
+    set(name "ez_${name}")
+    foreach(d IN LISTS EZ_MODULE_${_table_name}_DEPS)
+      list(APPEND M_PUBLIC_DEPS ez::${d})
+    endforeach()
+  endif()
   add_library(${name} STATIC ${M_SOURCES})
+  if(_table_name)
+    set_target_properties(${name} PROPERTIES EZ_LAYER "${EZ_MODULE_${_table_name}_LAYER}")
+    if(_table_name STREQUAL "base")
+      target_include_directories(${name} PUBLIC "${EZ_GENERATED_DIR}")   # ez/base/modules.gen.hpp
+    endif()
+  endif()
   string(REGEX REPLACE "^ez_" "" _short "${name}")
   add_library(ez::${_short} ALIAS ${name})   # ez_base -> ez::base
   target_include_directories(${name} PUBLIC "${PROJECT_SOURCE_DIR}/src")

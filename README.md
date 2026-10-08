@@ -67,6 +67,7 @@ ez, ez.cmd            optional launcher
 | [Dev tools](docs/tools.md) | Tracy install, prebuilt vs source, provenance |
 | [VS Code](docs/vscode.md) | everything without a terminal |
 | [Lint](docs/lint.md) | naming rules, `ez lint`, `ez check`, suppressions, tool versions |
+| [Testing](docs/testing.md) | `ez test`, labels, writing a test, subprocess and temp-dir helpers |
 | [Design specs](specs/README.md) | philosophy, architecture, threading, plugins, linking, observability, UI |
 
 ## Platform status

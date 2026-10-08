@@ -4,6 +4,7 @@ IndentWidth: 4
 AccessModifierOffset: -4
 AllowShortFunctionsOnASingleLine: Inline
 DerivePointerAlignment: false
+IndentPPDirectives: BeforeHash
 PointerAlignment: Left
 # Include order (naming.md N-8): own header, first-party, third-party, system; one blank line between.
 IncludeBlocks: Regroup

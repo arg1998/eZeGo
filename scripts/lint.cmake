@@ -206,7 +206,7 @@ foreach(_f IN LISTS _sources)
       endif()
     endif()
     if(_code MATCHES "ez::([a-z0-9_]+)::detail::" AND NOT CMAKE_MATCH_1 STREQUAL _module
-       AND NOT (_module STREQUAL "" AND _rel MATCHES "^tests/"))
+       AND CMAKE_MATCH_1 IN_LIST _modules)
       _report(detail-private "ez::${CMAKE_MATCH_1}::detail is private to module '${CMAKE_MATCH_1}'")
     endif()
 

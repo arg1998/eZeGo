@@ -74,7 +74,7 @@
       "name": "tsan", "inherits": "_base", "configurePreset": "tsan",
       "condition": { "type": "notEquals", "lhs": "${hostSystemName}", "rhs": "Windows" }
     },
-    { "name": "check", "inherits": "_base", "configurePreset": "check" }
+    { "name": "check", "inherits": "_base", "configurePreset": "check", "execution": { "noTestsAction": "error", "timeout": 120, "scheduleRandom": true } }
   ],
   "workflowPresets": [
     {
