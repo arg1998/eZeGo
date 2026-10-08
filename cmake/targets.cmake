@@ -33,6 +33,7 @@ function(ez_warnings target)
     target_compile_options(${target} PRIVATE -Wall -Wextra -Wpedantic -Wshadow
       -Wno-missing-field-initializers -Wno-gnu-zero-variadic-macro-arguments)
   endif()
+  ez_strict(${target})   # cmake/lint.cmake: stricter flags, clang-tidy, -Werror; skipped for legacy
 endfunction()
 
 # ez_module(<name> SOURCES ... [PUBLIC_DEPS ...] [PRIVATE_DEPS ...])

@@ -18,6 +18,7 @@ switch ($Cmd) {
   'build'   { cmake --workflow --preset ($(if ($first) { $first } else { 'debug' })) }
   'test'    { ctest --preset ($(if ($first) { $first } else { 'debug' })) @tail }
   'check'   { cmake --workflow --preset check }
+  'lint'    { cmake -P scripts/lint.cmake @Rest }
   'run'     { cmake -P scripts/run.cmake "--preset=$(if ($first) { $first } else { 'debug' })" -- @tail }
   'profile' { cmake -P scripts/profile.cmake @Rest }
   'clean'   { if (-not $first) { 'usage: ez clean <preset>'; exit 2 }; cmake -E rm -rf "build/$first" }

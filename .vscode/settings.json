@@ -9,6 +9,11 @@
   // clangd provides code intelligence (it reads .clangd -> build/compile_commands.json).
   // The Microsoft C/C++ extension is only used for its Windows debugger.
   "C_Cpp.intelliSenseEngine": "disabled",
+
+  // Format on save with clangd's clang-format engine and the tracked .clang-format; clangd also
+  // shows the tracked .clang-tidy naming rules inline (specs/naming.md N-13).
+  "[cpp]": { "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd", "editor.formatOnSave": true },
+  "[c]": { "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd", "editor.formatOnSave": true },
   "clangd.arguments": ["--header-insertion=never", "--background-index"],
 
   "search.exclude": { "build": true, "third_party/_src": true },

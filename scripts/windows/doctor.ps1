@@ -43,3 +43,4 @@ else { "WARN|developer environment|not loaded in this shell; ez.cmd loads it aut
 "HINT|toolchain|winget install Kitware.CMake Ninja-build.Ninja LLVM.LLVM|"
 "HINT|accelerators|winget install Mozilla.sccache|"
 "HINT|clang_tools|winget install LLVM.LLVM|"
+"HINT|clang_tidy|winget install LLVM.LLVM   (clang-tidy ships with LLVM; also in Visual Studio's 'C++ Clang tools')|"

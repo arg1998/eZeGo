@@ -1,3 +1,5 @@
+set(EZ_LEGACY ON)   # prototype code, exempt from naming lint (cmake/lint.cmake)
+
 # The GUI application: the only target that sees GLFW and Dear ImGui.
 ez_executable(ezego
   SOURCES application.hpp application.cpp main.cpp ${EZ_CORE_EXE_SOURCES}

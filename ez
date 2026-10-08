@@ -15,6 +15,7 @@ case "$cmd" in
   build)   exec cmake --workflow --preset "${1:-debug}" ;;
   test)    preset=${1:-debug}; [ $# -gt 0 ] && shift; exec ctest --preset "$preset" "$@" ;;
   check)   exec cmake --workflow --preset check ;;
+  lint)    exec cmake -P scripts/lint.cmake "$@" ;;
   run)     preset=${1:-debug}; [ $# -gt 0 ] && shift; exec cmake -P scripts/run.cmake --preset="$preset" -- "$@" ;;
   profile) exec cmake -P scripts/profile.cmake "$@" ;;
   clean)   [ -n "$1" ] || { echo "usage: ./ez clean <preset>"; exit 2; }; exec cmake -E rm -rf "build/$1" ;;
@@ -29,7 +30,8 @@ usage: ./ez <command> [args]
   vscode                 regenerate eZeGo.code-workspace
   build [preset]         configure + build: debug (default) | profile | release | asan | tsan
   test  [preset] [ctest args]   e.g. ./ez test debug -L unit
-  check                  pre-merge gate: build + test debug
+  check                  pre-merge gate: lint, build with clang-tidy and -Werror, test (build/check)
+  lint  [--fix] [--tidy=off] [--format=off]   naming, layout, formatting and clang-tidy findings
   run   [preset] [app args]     build, then run the app
   profile [--capture=f.tracy] [-- app args]   build profile, open Tracy, run the app
   clean <preset>         delete build/<preset>

@@ -19,7 +19,8 @@ pkg() { case $PM in apt) echo "$1";; dnf|zypper) echo "$2";; pacman) echo "$3";;
 # (doctor.cmake checks the tools themselves; these are the install lines it prints)
 echo "HINT|toolchain|$INSTALL $(pkg 'clang lld ninja-build cmake' 'clang lld ninja-build cmake' 'clang lld ninja cmake')|"
 echo "HINT|accelerators|$INSTALL $(pkg 'mold ccache' 'mold ccache' 'mold ccache')|"
-echo "HINT|clang_tools|$INSTALL $(pkg 'clangd clang-format' 'clang-tools-extra' 'clang')|"
+echo "HINT|clang_tools|$INSTALL $(pkg 'clangd-@MAJOR@ clang-format-@MAJOR@' 'clang-tools-extra' 'clang')|"
+echo "HINT|clang_tidy|$INSTALL $(pkg 'clang-tidy-@MAJOR@' 'clang-tools-extra' 'clang')|"
 
 if ! command -v pkg-config >/dev/null 2>&1; then
   echo "ERROR|pkg-config|not found (needed to locate windowing headers)|$INSTALL $(pkg pkg-config pkgconf-pkg-config pkgconf)"

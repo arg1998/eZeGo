@@ -8,7 +8,9 @@ set(_ez_db_src "${CMAKE_BINARY_DIR}/compile_commands.json")
 
 # Only for preset trees under build/<preset>/ (not for ad-hoc build directories elsewhere).
 string(FIND "${CMAKE_BINARY_DIR}/" "${_ez_db_dir}/" _ez_pos)
-if(NOT CMAKE_EXPORT_COMPILE_COMMANDS OR NOT _ez_pos EQUAL 0)
+# The check tree is a gate, not a working tree: configuring it must not move clangd off the
+# tree the developer is working in.
+if(NOT CMAKE_EXPORT_COMPILE_COMMANDS OR NOT _ez_pos EQUAL 0 OR EZ_LINT)
   return()
 endif()
 

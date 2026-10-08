@@ -27,6 +27,7 @@ if command -v brew >/dev/null 2>&1; then
   echo "HINT|toolchain|brew install cmake ninja|"
   echo "HINT|accelerators|brew install ccache|"
   echo "HINT|clang_tools|brew install llvm   (for clangd / clang-format; Apple Clang stays the compiler)|"
+  echo "HINT|clang_tidy|brew install llvm   (clang-tidy is found in \$(brew --prefix llvm)/bin; Apple Clang stays the compiler)|"
   echo "OK|Homebrew|$(brew --prefix)|"
 else
   echo "HINT|toolchain|install CMake and Ninja (https://cmake.org/download, https://github.com/ninja-build/ninja/releases)|"

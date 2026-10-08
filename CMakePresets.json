@@ -40,6 +40,12 @@
       "inherits": "_base",
       "cacheVariables": { "EZ_MODE": "debug", "CMAKE_BUILD_TYPE": "Debug", "EZ_SANITIZE": "thread" },
       "condition": { "type": "notEquals", "lhs": "${hostSystemName}", "rhs": "Windows" }
+    },
+    {
+      "name": "check",
+      "displayName": "check: debug + clang-tidy in the build + warnings as errors (pre-merge gate)",
+      "inherits": "_base",
+      "cacheVariables": { "EZ_MODE": "debug", "CMAKE_BUILD_TYPE": "Debug", "EZ_LINT": "ON", "EZ_WERROR": "ON" }
     }
   ],
   "buildPresets": [
@@ -50,7 +56,8 @@
     {
       "name": "tsan", "configurePreset": "tsan",
       "condition": { "type": "notEquals", "lhs": "${hostSystemName}", "rhs": "Windows" }
-    }
+    },
+    { "name": "check", "configurePreset": "check" }
   ],
   "testPresets": [
     {
@@ -66,7 +73,8 @@
     {
       "name": "tsan", "inherits": "_base", "configurePreset": "tsan",
       "condition": { "type": "notEquals", "lhs": "${hostSystemName}", "rhs": "Windows" }
-    }
+    },
+    { "name": "check", "inherits": "_base", "configurePreset": "check" }
   ],
   "workflowPresets": [
     {
@@ -91,8 +99,8 @@
     },
     {
       "name": "check",
-      "displayName": "pre-merge gate: configure, build and test debug",
-      "steps": [ { "type": "configure", "name": "debug" }, { "type": "build", "name": "debug" }, { "type": "test", "name": "debug" } ]
+      "displayName": "pre-merge gate: lint, build with clang-tidy and -Werror, test",
+      "steps": [ { "type": "configure", "name": "check" }, { "type": "build", "name": "check" }, { "type": "test", "name": "check" } ]
     }
   ]
 }

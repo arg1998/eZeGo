@@ -1,3 +1,5 @@
+set(EZ_LEGACY ON)   # prototype code, exempt from naming lint (cmake/lint.cmake)
+
 # ez_core — L0 foundations: definitions, configs, assertions, logger, memory, platform, profiler.
 # Headless: no window, GPU or UI library on its include path or link line.
 

@@ -36,13 +36,36 @@
       "problemMatcher": []
     },
     {
-      "label": "ez: check (build + test debug)",
+      "label": "ez: check (lint + build + test, warnings are errors)",
       "type": "process",
       "command": "cmake",
       "args": ["--workflow", "--preset", "check"],
       "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": ["$gcc"],
       "group": "test"
+    },
+    {
+      "label": "ez: lint (naming, layout, format, clang-tidy)",
+      "type": "process",
+      "command": "cmake",
+      "args": ["-P", "scripts/lint.cmake"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": {
+        "owner": "ez-lint",
+        "fileLocation": ["autoDetect", "${workspaceFolder}"],
+        "pattern": {
+          "regexp": "^(.*?):(\\d+):(?:(\\d+):)?\\s+(?:\\x1b\\[[0-9;]*m)?(error|warning)(?:\\x1b\\[[0-9;]*m)?:\\s+(.*)$",
+          "file": 1, "line": 2, "column": 3, "severity": 4, "message": 5
+        }
+      }
+    },
+    {
+      "label": "ez: lint --fix (apply clang-format)",
+      "type": "process",
+      "command": "cmake",
+      "args": ["-P", "scripts/lint.cmake", "--fix", "--tidy=off"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": []
     },
     {
       "label": "ez: profile (build profile, open Tracy, run)",

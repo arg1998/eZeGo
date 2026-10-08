@@ -9,6 +9,7 @@ if(PROJECT_SOURCE_DIR STREQUAL PROJECT_BINARY_DIR)
 endif()
 
 include(cmake/modes.cmake)
+include(cmake/lint.cmake)
 include(cmake/targets.cmake)
 include(cmake/deps.cmake)
 include(cmake/editor.cmake)

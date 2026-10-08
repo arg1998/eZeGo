@@ -1,6 +1,6 @@
 # eZeGo — Naming and Namespaces
 
-> **Status:** Proposed, 2026-10-08. **Not enforced yet.** Decisions are *proposed* until confirmed. Decision IDs (`N-n`) are indexed in [`README.md`](./README.md).
+> **Status:** Accepted, 2026-10-08, with the defaults of §15.1. **Enforced** from 2026-10-08: `.clang-tidy`, `scripts/lint.cmake`, the `check` preset; how-to in [`../docs/lint.md`](../docs/lint.md). Decision IDs (`N-n`) are indexed in [`README.md`](./README.md).
 > **Companions:** [`build-system.md`](./build-system.md) B-9, B-12, B-13, B-14 · [`linking.md`](./linking.md) L-6 · [`plugins.md`](./plugins.md) §2 · [`logging.md`](./logging.md) §3 · [`cvars.md`](./cvars.md) §7 · [`philosophy.md`](./philosophy.md) §2
 > **Scope:** the names of everything in the repository: namespaces, types, functions, variables, macros, files, build targets, registry names (cvars, log categories, metrics, memory tags), and the C SDK; and how each rule is detected and enforced. Layout and formatting belong to `clang-format` and appear only where they touch naming.
 
@@ -323,7 +323,7 @@ CheckOptions:
 |---|---|
 | Severity | Warnings in the editor and in a plain build, so a developer mid-edit is not blocked. Errors in the `check` workflow preset and in CI through `-warnings-as-errors=*` and `-Werror`, so nothing merges with a violation. Same policy as the compiler warnings in B-3. |
 | Where `clang-tidy` runs | `clangd` runs it incrementally for the open file, which is the zero-step detection the seamless-DX requirement asks for. `ez lint` runs `run-clang-tidy` over `build/compile_commands.json` for changed files by default and for everything with `--all`; the `check` preset runs everything. |
-| Versions | `clang-tidy` and `clang-format` come from the same LLVM as the compiler and are listed in `dependencies.json` as tools (B-14); `doctor` reports a missing or mismatched one. Different versions disagree on edge cases, so CI and developers must use the pinned one. |
+| Versions | `clang-tidy` and `clang-format` come from the same LLVM as the compiler: the finder in `scripts/lib/llvm.cmake` prefers the tool whose major version matches the compiler, and `doctor` reports a missing or mismatched one with the install command for the OS. *(Implemented this way instead of a manifest entry: the compiler itself is a system tool, and the tools must follow it.)* |
 | Scope | First-party code under `src/` and `tests/`. Third-party sources are `SYSTEM` includes and are never linted. |
 | Exceptions | `// NOLINT(readability-identifier-naming)` on the line, with a reason, for interop with a third-party API that dictates a name (an `ImGui` callback, a GLFW allocator table). Exceptions are counted by `ez lint` so they stay rare. |
 | The lint script | Pure CMake script mode, so it runs on all three OSes with no extra interpreter; one job per function in `scripts/lib/lint/`. It is read-only and prints the fix with every finding, like `doctor`. |
@@ -352,11 +352,11 @@ The prototype under `src/core/` and `legacy/` is replaced, not renamed, so this 
 
 ## 15. Open questions
 
-### 15.1 To decide at review
+### 15.1 Decided at review
 
-These are the choices where the alternatives are equally consistent and only a preference separates them. Each has the default this document uses.
+These were the choices where the alternatives are equally consistent and only a preference separates them. **Amir accepted every default on 2026-10-08.**
 
-| # | Question | Default |
+| # | Question | Decision |
 |---|---|---|
 | 1 | `i32` or `s32` for signed integers | `i32` |
 | 2 | Private members: trailing underscore `value_` or prefix `m_value` | Trailing underscore; `clang-tidy` enforces either equally well |

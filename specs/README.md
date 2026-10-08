@@ -17,7 +17,7 @@ This folder (`specs/`, formerly `.agent/`) holds the design intent for eZeGo. St
 | [`ui-system.md`](./ui-system.md) | UI API boundary: immediate mode, own vocabulary, widgets / canvas / viewport layers | **Proposed 2026-10-05** |
 | [`logging.md`](./logging.md) | Log API, levels, categories, per-thread rings and log thread, sinks, runtime control, costs | **Proposed 2026-10-08, not implemented** |
 | [`cvars.md`](./cvars.md) | Runtime variables: one registry, zero-cost reads, mutability, validation, persistence, tiers and developer mode, console and panel | **Proposed 2026-10-08, not implemented** |
-| [`naming.md`](./naming.md) | Naming and namespaces: three shapes, prefixes and suffixes, files, registry names, the C SDK mapping, enforcement by clang-tidy and a lint script | **Proposed 2026-10-08, not enforced** |
+| [`naming.md`](./naming.md) | Naming and namespaces: three shapes, prefixes and suffixes, files, registry names, the C SDK mapping, enforcement by clang-tidy and a lint script | **Accepted and enforced 2026-10-08** |
 | [`code-organization.md`](./code-organization.md) | The repository tree, the inside of a module, the module table, the module inventory, how the tree grows | **Proposed 2026-10-08, not applied** |
 | [`testing.md`](./testing.md) | Every kind of test, the phased rollout, doctest plus small purpose harnesses, the developer contract, fakes, hardware tiers; CI and reference machines deferred | **Proposed 2026-10-08, not implemented** |
 
@@ -121,19 +121,19 @@ Status values: **Proposed** (written up with trade-offs, awaiting confirmation),
 
 | ID | Decision | Status |
 |---|---|---|
-| N-1 | Three shapes: `lower_snake_case` for everything that is not a type or macro, `PascalCase` for types, `UPPER_SNAKE_CASE` for macros and C constants | Proposed |
-| N-2 | Namespace path equals directory path under `src/ez/`, with `base/` mapping to `ez` itself (CO-9); at most `module::sub::detail`; no `using namespace` | Proposed |
-| N-3 | One module name in six places: directory, namespace, target, log category, cvar prefix, memory tag, all checked against the central module table | Proposed |
-| N-4 | Types `PascalCase`; `enum class` with explicit type; acronyms as words; the primitive aliases are the one lowercase exception; `i32` replaces `s32` | Proposed |
-| N-5 | Functions `lower_snake_case`; verbs for actions, nouns for accessors, `set_` for mutators, `is_`/`has_` for predicates; fixed lifecycle verb pairs; no module name inside the identifier | Proposed |
-| N-6 | Public members plain; private members trailing `_`; mutable globals `g_`; `thread_local` `t_`; cvars `cv_`; constants plain; unit suffixes | Proposed |
-| N-7 | Macros `EZ_` and `UPPER_SNAKE_CASE`; feature macros always 0 or 1 with `-Wundef`; no reserved identifiers | Proposed |
-| N-8 | Files `lower_snake_case`; `.hpp` for C++, `.h` for C; platform suffixes `_linux` `_macos` `_windows` `_posix`; tests `<topic>_test.cpp`; `#pragma once`; includes rooted at `src/` | Proposed |
-| N-9 | Registry names: dotted lowercase segments, module first, one separator; memory tags move from `/` to `.` | Proposed |
-| N-10 | The C SDK is a mechanical mapping of the C++ name: `ez_` + path, `EZ_` for constants, no `_t` | Proposed |
-| N-11 | CMake: `ez_<module>` targets with `ez::` aliases, `ez_<verb>` functions, `EZ_` cache variables, upstream names for third-party | Proposed |
-| N-12 | American spelling; a fixed abbreviation list; acronyms as words; positive names | Proposed |
-| N-13 | Enforcement: `clang-tidy` through `clangd` inline and in `check`, compiler warnings, a CMake lint script, `clang-format`; warnings locally, errors in `check` and CI; pinned tool versions | Proposed |
+| N-1 | Three shapes: `lower_snake_case` for everything that is not a type or macro, `PascalCase` for types, `UPPER_SNAKE_CASE` for macros and C constants | Accepted 2026-10-08, enforced |
+| N-2 | Namespace path equals directory path under `src/ez/`, with `base/` mapping to `ez` itself (CO-9); at most `module::sub::detail`; no `using namespace` | Accepted 2026-10-08, enforced |
+| N-3 | One module name in six places: directory, namespace, target, log category, cvar prefix, memory tag, all checked against the central module table | Accepted 2026-10-08, enforced |
+| N-4 | Types `PascalCase`; `enum class` with explicit type; acronyms as words; the primitive aliases are the one lowercase exception; `i32` replaces `s32` | Accepted 2026-10-08, enforced |
+| N-5 | Functions `lower_snake_case`; verbs for actions, nouns for accessors, `set_` for mutators, `is_`/`has_` for predicates; fixed lifecycle verb pairs; no module name inside the identifier | Accepted 2026-10-08, enforced |
+| N-6 | Public members plain; private members trailing `_`; mutable globals `g_`; `thread_local` `t_`; cvars `cv_`; constants plain; unit suffixes | Accepted 2026-10-08, enforced |
+| N-7 | Macros `EZ_` and `UPPER_SNAKE_CASE`; feature macros always 0 or 1 with `-Wundef`; no reserved identifiers | Accepted 2026-10-08, enforced |
+| N-8 | Files `lower_snake_case`; `.hpp` for C++, `.h` for C; platform suffixes `_linux` `_macos` `_windows` `_posix`; tests `<topic>_test.cpp`; `#pragma once`; includes rooted at `src/` | Accepted 2026-10-08, enforced |
+| N-9 | Registry names: dotted lowercase segments, module first, one separator; memory tags move from `/` to `.` | Accepted 2026-10-08, enforced |
+| N-10 | The C SDK is a mechanical mapping of the C++ name: `ez_` + path, `EZ_` for constants, no `_t` | Accepted 2026-10-08, enforced |
+| N-11 | CMake: `ez_<module>` targets with `ez::` aliases, `ez_<verb>` functions, `EZ_` cache variables, upstream names for third-party | Accepted 2026-10-08, enforced |
+| N-12 | American spelling; a fixed abbreviation list; acronyms as words; positive names | Accepted 2026-10-08, enforced |
+| N-13 | Enforcement: `clang-tidy` through `clangd` inline and in `check`, compiler warnings, a CMake lint script, `clang-format`; warnings locally, errors in `check` and CI; pinned tool versions | Accepted 2026-10-08, enforced |
 
 ### Code organization — [`code-organization.md`](./code-organization.md)
 

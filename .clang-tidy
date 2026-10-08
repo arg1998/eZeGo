@@ -1,0 +1,60 @@
+# Naming rules from specs/naming.md (N-1 to N-7), checked by clang-tidy.
+# clangd reads this file, so violations show inline in the editor as you type. The `check` preset
+# runs the same checks as part of the build and treats them as errors (naming.md N-13).
+# Scope: first-party code under src/ez/, tests/ and sdk/. Third-party and legacy code are excluded.
+Checks: >
+  -*,
+  readability-identifier-naming,
+  google-build-using-namespace,
+  misc-anonymous-namespace-in-header,
+  bugprone-reserved-identifier
+HeaderFilterRegex: '.*/(src/ez|tests|sdk)/.*'
+CheckOptions:
+  # N-1, N-2: namespaces
+  readability-identifier-naming.NamespaceCase: lower_case
+  # N-4: types are PascalCase; the primitive aliases are the one lowercase exception
+  readability-identifier-naming.ClassCase: CamelCase
+  readability-identifier-naming.StructCase: CamelCase
+  readability-identifier-naming.UnionCase: CamelCase
+  readability-identifier-naming.EnumCase: CamelCase
+  readability-identifier-naming.EnumConstantCase: CamelCase
+  readability-identifier-naming.ScopedEnumConstantCase: CamelCase
+  readability-identifier-naming.TypeAliasCase: CamelCase
+  readability-identifier-naming.TypedefCase: CamelCase
+  readability-identifier-naming.TypeAliasIgnoredRegexp: '^(u8|u16|u32|u64|i8|i16|i32|i64|f32|f64|b8|usize)$'
+  readability-identifier-naming.TypedefIgnoredRegexp: '^ez_[a-z0-9_]+$'
+  readability-identifier-naming.ConceptCase: CamelCase
+  readability-identifier-naming.TemplateParameterCase: CamelCase
+  readability-identifier-naming.TypeTemplateParameterCase: CamelCase
+  readability-identifier-naming.ValueTemplateParameterCase: CamelCase
+  readability-identifier-naming.TemplateTemplateParameterCase: CamelCase
+  # N-5: functions and methods
+  readability-identifier-naming.FunctionCase: lower_case
+  readability-identifier-naming.MethodCase: lower_case
+  # N-6: variables
+  readability-identifier-naming.VariableCase: lower_case
+  readability-identifier-naming.ParameterCase: lower_case
+  readability-identifier-naming.LocalVariableCase: lower_case
+  readability-identifier-naming.LocalConstantCase: lower_case
+  readability-identifier-naming.ConstexprVariableCase: lower_case
+  readability-identifier-naming.GlobalConstantCase: lower_case
+  readability-identifier-naming.StaticConstantCase: lower_case
+  readability-identifier-naming.ClassConstantCase: lower_case
+  readability-identifier-naming.MemberCase: lower_case
+  readability-identifier-naming.PublicMemberCase: lower_case
+  readability-identifier-naming.PrivateMemberCase: lower_case
+  readability-identifier-naming.PrivateMemberSuffix: '_'
+  readability-identifier-naming.ProtectedMemberCase: lower_case
+  readability-identifier-naming.ProtectedMemberSuffix: '_'
+  readability-identifier-naming.GlobalVariableCase: lower_case
+  readability-identifier-naming.GlobalVariablePrefix: 'g_'
+  readability-identifier-naming.GlobalVariableIgnoredRegexp: '^(t_|cv_)[a-z0-9_]+$'
+  readability-identifier-naming.StaticVariableCase: lower_case
+  readability-identifier-naming.StaticVariablePrefix: 'g_'
+  readability-identifier-naming.StaticVariableIgnoredRegexp: '^t_[a-z0-9_]+$'
+  readability-identifier-naming.ClassMemberCase: lower_case
+  readability-identifier-naming.ClassMemberPrefix: 'g_'
+  # N-7: macros
+  readability-identifier-naming.MacroDefinitionCase: UPPER_CASE
+  readability-identifier-naming.MacroDefinitionPrefix: 'EZ_'
+  readability-identifier-naming.MacroDefinitionIgnoredRegexp: '^(EZ_[A-Z0-9_]+|[A-Z0-9_]+_H_?)$'

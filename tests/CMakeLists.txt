@@ -10,7 +10,14 @@ function(ez_test name)
   set_tests_properties(${name} PROPERTIES LABELS "${T_LABELS}")
 endfunction()
 
-ez_test(test_core SOURCES test_core.cpp DEPS ez::core LABELS unit)
+add_subdirectory(legacy)
+
+# Lint as a test in the check tree only (naming.md N-13): layout rules and formatting. clang-tidy
+# already ran as part of this tree's build, so it is skipped here.
+if(EZ_LINT)
+  add_test(NAME lint COMMAND "${CMAKE_COMMAND}" -P "${PROJECT_SOURCE_DIR}/scripts/lint.cmake" --tidy=off)
+  set_tests_properties(lint PROPERTIES LABELS lint)
+endif()
 
 # Smoke: the real application binary starts and answers --version without opening a window.
 add_test(NAME smoke_app_version COMMAND ezego --version)
