@@ -70,6 +70,8 @@ graph TD
 | **L2 Capabilities** | Rendering, audio, networking, hardware service, themes | Built behind seams |
 | **L3 Extensibility & product** | Plugin SDK, node runtime, the actual lighting domain + UX | Built last, but **their seams constrain every layer below** |
 
+How these layers map onto directories, namespaces and build targets, and which modules exist in each, is in [`code-organization.md`](./code-organization.md) *(proposed 2026-10-08)*.
+
 ```mermaid
 graph LR
     UI["UI / Renderer"] --> ENG["Engine Core (headless)"]
@@ -199,7 +201,7 @@ The headless constraint (engine core has no GPU/window/UI dependency) exists *sp
 
 - **Automated before every merge to `main`:** unit, integration, e2e, **scenario/simulation** (deterministic project + inputs ⇒ deterministic output), and smoke tests.
 - **Manual:** UI testing.
-- Frameworks are **open**.
+- Frameworks and the full list of test kinds: [`testing.md`](./testing.md) *(proposed 2026-10-08)*.
 
 ---
 

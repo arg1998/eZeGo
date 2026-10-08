@@ -36,7 +36,8 @@ The lowercase shape covers constants on purpose. A fourth shape for constants wo
 ### 3.1 Structure
 
 ```text
-ez                      root; nothing lives directly in it except the primitive types (§4.1)
+ez                      root; holds the base module itself: src/ez/base/ maps to ez, not ez::base
+                        (code-organization.md CO-9): primitive types, handles, result, containers
 ez::<module>            one per module directory under src/ez/, L0 to L2: ez::log, ez::cvars, ez::mem,
                         ez::platform, ez::engine, ez::audio, ez::net, ez::ui, ez::app ...
 ez::<module>::<sub>     only when src/ez/<module>/<sub>/ exists: ez::net::artnet
@@ -46,7 +47,7 @@ ez::<module>::detail    implementation that must be in a header but is not API
 
 | Rule | Decision | Enforced by |
 |---|---|---|
-| Namespace path equals directory path | `namespace ez::net::artnet` may appear only in files under `src/ez/net/artnet/` | lint script |
+| Namespace path equals directory path | `namespace ez::net::artnet` may appear only in files under `src/ez/net/artnet/`. One exception: `src/ez/base/` is namespace `ez` ([`code-organization.md`](./code-organization.md) CO-9). | lint script |
 | Depth | At most three segments below `ez`, which is `module::sub::detail` | lint script |
 | `detail` is private | `ez::<m>::detail` is referenced only from files of module `m` | lint script |
 | No `using namespace` | Anywhere in first-party code, including `.cpp` files. Code lives inside its own namespace block and names siblings unqualified. Tests may `using namespace ez::test`. | `clang-tidy google-build-using-namespace` |
@@ -369,7 +370,7 @@ These are the choices where the alternatives are equally consistent and only a p
 | Topic | Default | Revisit when |
 |---|---|---|
 | Commit message and branch naming conventions | Not covered here | A contributor guide is written |
-| Test case naming inside the test framework | `module_behavior_condition` in snake case | The framework is chosen (B-12) |
+| Test case naming inside the test framework | Resolved by [`testing.md`](./testing.md) §6: a readable sentence, `"ring: drops the line when full"` | |
 | Lint on changed files versus all files locally | Changed files | `run-clang-tidy` time is measured on the full tree |
 | A compiled `clang-tidy` plugin for the structural checks instead of the CMake script | CMake script | The script's regexes stop being enough |
 | Enforcing the abbreviation list on `lower_snake_case` names | Review only | A word list check proves cheap |

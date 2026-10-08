@@ -18,6 +18,8 @@ This folder (`specs/`, formerly `.agent/`) holds the design intent for eZeGo. St
 | [`logging.md`](./logging.md) | Log API, levels, categories, per-thread rings and log thread, sinks, runtime control, costs | **Proposed 2026-10-08, not implemented** |
 | [`cvars.md`](./cvars.md) | Runtime variables: one registry, zero-cost reads, mutability, validation, persistence, tiers and developer mode, console and panel | **Proposed 2026-10-08, not implemented** |
 | [`naming.md`](./naming.md) | Naming and namespaces: three shapes, prefixes and suffixes, files, registry names, the C SDK mapping, enforcement by clang-tidy and a lint script | **Proposed 2026-10-08, not enforced** |
+| [`code-organization.md`](./code-organization.md) | The repository tree, the inside of a module, the module table, the module inventory, how the tree grows | **Proposed 2026-10-08, not applied** |
+| [`testing.md`](./testing.md) | Every kind of test, the phased rollout, doctest plus small purpose harnesses, the developer contract, fakes, hardware tiers; CI and reference machines deferred | **Proposed 2026-10-08, not implemented** |
 
 ## Decision register
 
@@ -120,7 +122,7 @@ Status values: **Proposed** (written up with trade-offs, awaiting confirmation),
 | ID | Decision | Status |
 |---|---|---|
 | N-1 | Three shapes: `lower_snake_case` for everything that is not a type or macro, `PascalCase` for types, `UPPER_SNAKE_CASE` for macros and C constants | Proposed |
-| N-2 | Namespace path equals directory path under `src/ez/`; at most `module::sub::detail`; no `using namespace` | Proposed |
+| N-2 | Namespace path equals directory path under `src/ez/`, with `base/` mapping to `ez` itself (CO-9); at most `module::sub::detail`; no `using namespace` | Proposed |
 | N-3 | One module name in six places: directory, namespace, target, log category, cvar prefix, memory tag, all checked against the central module table | Proposed |
 | N-4 | Types `PascalCase`; `enum class` with explicit type; acronyms as words; the primitive aliases are the one lowercase exception; `i32` replaces `s32` | Proposed |
 | N-5 | Functions `lower_snake_case`; verbs for actions, nouns for accessors, `set_` for mutators, `is_`/`has_` for predicates; fixed lifecycle verb pairs; no module name inside the identifier | Proposed |
@@ -133,6 +135,38 @@ Status values: **Proposed** (written up with trade-offs, awaiting confirmation),
 | N-12 | American spelling; a fixed abbreviation list; acronyms as words; positive names | Proposed |
 | N-13 | Enforcement: `clang-tidy` through `clangd` inline and in `check`, compiler warnings, a CMake lint script, `clang-format`; warnings locally, errors in `check` and CI; pinned tool versions | Proposed |
 
+### Code organization — [`code-organization.md`](./code-organization.md)
+
+| ID | Decision | Status |
+|---|---|---|
+| CO-1 | One directory is one module, one namespace and one static library, flat under `src/ez/`; the layer is a table column, never a path segment | Proposed |
+| CO-2 | Dependencies declared per module and checked at configure time: same or lower layer only, no cycles | Proposed |
+| CO-3 | Public API is a module's top-level headers; `detail/` is private and enforced by lint | Proposed |
+| CO-4 | Platform code by file suffix, in place, selected by CMake | Proposed |
+| CO-5 | Tests mirror the tree under `tests/<module>/` | Proposed |
+| CO-6 | Executables contain only `main`, under `src/apps/`; first-party utilities under `src/tools/` | Proposed |
+| CO-7 | The SDK lives at `sdk/` outside `src/`; first-party plugins under `plugins/` are built against it | Proposed |
+| CO-8 | `modules.cmake` is the single module table; it creates targets, checks layers and generates `modules.gen.hpp` for log categories, cvar prefixes and memory tags | Proposed |
+| CO-9 | `src/ez/base/` maps to namespace `ez` itself, the one exception to N-2 | Proposed |
+
+### Testing — [`testing.md`](./testing.md)
+
+| ID | Decision | Status |
+|---|---|---|
+| T-1 | doctest, pinned; purpose-built harnesses only for a subprocess runner, a micro-benchmark helper, the scenario runner and fuzz targets | Proposed |
+| T-2 | Thirteen kinds of test with CTest labels, rolled out in phases; a module ships with unit, integration and a benchmark if its spec claims a cost | Proposed |
+| T-3 | One test executable per module plus a support library; `tests/<module>/`, `integration/`, `smoke/`, `scenarios/`, `fuzz/`, `bench/`, `support/` | Proposed |
+| T-4 | `ez test` runs unit and integration of the debug tree in under 30 s, headless; everything else opt-in; a missing environment means skipped, never failed | Proposed |
+| T-5 | Fakes, not mocks: virtual clock, captured log sink, counting and fault-injecting allocator, loopback transport, null audio, temp directory, virtual device pack | Proposed |
+| T-6 | Test hygiene: independent cases, random order in `check`, no sleeps or wall clock, per-label timeouts, readable sentence names, exceptions on in test files only | Proposed |
+| T-7 | Smoke through a `--smoke=<frames>` flag, label `gpu`, opt-in | Proposed |
+| T-8 | Sanitizer runs reuse the presets: `ez test asan` | Proposed |
+| T-9 | Fuzz through libFuzzer with committed corpora; crashes become regression tests | Proposed |
+| T-10 | Bench as a feature: `ez bench` on the release tree, local JSON-lines history with deltas, no gate until a reference machine exists | Proposed |
+| T-11 | Scenario tests with golden per-frame hashes, ABI tests with a second compiler, soak against the virtual rig; arrive with the engine, SDK and rig | Proposed |
+| T-12 | Hardware in four tiers: software twins beside each module, a virtual rig, firmware on the host, real devices that skip when absent | Proposed |
+| T-13 | CI, the performance reference machine and the hardware bench machine are deferred; the plan is recorded, nothing is built | Proposed |
+
 ## Earlier statements these proposals change
 
 | Earlier statement | Where | Changed to |
@@ -143,6 +177,8 @@ Status values: **Proposed** (written up with trade-offs, awaiting confirmation),
 | Vendor linking "undecided" | `philosophy.md` §6, `application-architecture.md` §9, `plugins.md` §7 | Static (L-1 to L-5) |
 | Synchronous logger writing to the platform console; reversed level enum; fixed 20 KiB format buffer | prototype `src/core/logger/`, `configs.hpp` | Per-thread rings and a log thread, ascending levels matching `EZ_LOG_LEVEL`, runtime line size (LG-3, LG-5, LG-9) |
 | `release` log floor at Warn | `build-system.md` B-3 table, `observability.md` §6, `cmake/modes.cmake`, `docs/build-modes.md` | Info floor and Info runtime default (LG-3), accepted 2026-10-08; the two specs are corrected, the CMake table and how-to page are updated when the logger is implemented |
+| Target names in the B-9 graph: `ez_plugin_host`, `ez_sdk` as a target under `src/`, one `ez_base` holding memory, platform, logging and metrics | `build-system.md` B-9 | A `plugin` module, `sdk/` at the repository root, one module per directory with `base` holding only the primitives (CO-1, CO-7, CO-9) |
+| Testing frameworks "open" | `philosophy.md` §6, `application-architecture.md` §8 and §9, `build-system.md` B-12 and §6 | doctest plus small purpose harnesses (T-1); the test kinds and labels in T-2 extend B-12's list |
 
 ## Tooling (implemented 2026-10-05)
 
