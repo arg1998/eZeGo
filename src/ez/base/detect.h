@@ -45,6 +45,8 @@
 #endif
 
 // ---------------------------------------------------------------- compiler
+// Detection only, never a gate: this header is shared with the plugin SDK, and plugins may be built
+// with any compiler. Which compilers build the host is decided by cmake/toolchain.cmake (B-11).
 // clang-cl defines both __clang__ and _MSC_VER; it is Clang.
 #if defined(__clang__)
     #define EZ_COMPILER_CLANG 1
@@ -54,12 +56,12 @@
     #define EZ_COMPILER_CLANG 0
     #define EZ_COMPILER_MSVC 1
     #define EZ_COMPILER_GCC 0
-#elif defined(__GNUC__) && defined(EZ_ALLOW_GCC)
+#elif defined(__GNUC__)
     #define EZ_COMPILER_CLANG 0
     #define EZ_COMPILER_MSVC 0
     #define EZ_COMPILER_GCC 1
 #else
-    #error "Unsupported compiler: eZeGo builds with Clang (GCC only with -DEZ_ALLOW_GCC=ON, unsupported)."
+    #error "Unknown compiler: eZeGo knows Clang, MSVC and GCC."
 #endif
 
 // ---------------------------------------------------------------- hardware constants

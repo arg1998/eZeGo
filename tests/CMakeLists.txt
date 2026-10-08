@@ -1,7 +1,7 @@
 # Tests are part of the main project (B-12, specs/testing.md). They link headless modules only:
 # nothing here can see GLFW, ImGui or a GPU. One executable per module (ez_test, cmake/testing.cmake),
 # one CTest test per doctest case. Labels: unit, integration, smoke, lint; gpu is excluded by the
-# presets and runs with `ctest --preset debug -L gpu`.
+# test presets and runs on demand with `ctest --preset gpu` (./ez test gpu).
 
 add_subdirectory(support)
 
@@ -26,6 +26,6 @@ add_test(NAME smoke_app_version COMMAND ezego --version)
 set_tests_properties(smoke_app_version PROPERTIES LABELS smoke PASS_REGULAR_EXPRESSION "eZeGo [0-9]+\\.[0-9]+\\.[0-9]+")
 
 # GUI smoke (testing.md T-7): opens the window, draws 120 frames, exits 0. Needs a display and a
-# GPU, so it is labelled "gpu" and excluded by the test presets: ctest --preset debug -L gpu
+# GPU, so it is labelled "gpu" and excluded by the test presets: ./ez test gpu
 add_test(NAME smoke_gui_starts COMMAND ezego --app.quit_after_frames=120 --log.file=off)
 set_tests_properties(smoke_gui_starts PROPERTIES LABELS "gpu;smoke")

@@ -101,7 +101,7 @@ These are what make the later implementation possible. They cost nothing today.
 | 1. The format string is a string literal | The record stores a pointer to it; a literal lives forever | `"" fmt ""` concatenation fails to compile for anything else |
 | 2. Arguments are integers, floats, bools, enums, pointers or C strings. `std::string` and other objects do not compile; pass `.c_str()`. | Raw copies must be trivially copyable; a C string is **copied at the call** because its memory may not outlive the line | `static_assert` on a `loggable<T>` trait |
 | 3. Arguments are evaluated exactly once, and only when the line is enabled | Side effects inside a log call must not depend on the level | Follows from the expansion in §2.2 |
-| 4. A line longer than `log.max_line` is truncated and ends with `…` | Fixed-size records | Implementation |
+| 4. A line longer than `log.max_line` is truncated and ends with `...` | Fixed-size records | Implementation |
 
 ### 2.4 Why printf-style and not brace-style
 
@@ -119,32 +119,25 @@ These are what make the later implementation possible. They cost nothing today.
 
 ## 3. Categories (LG-4)
 
-One category per module. Categories are a **closed, compile-time table** for first-party code and an **open runtime range** for plugins.
+One category per module. Categories **are the module table** ([`code-organization.md`](./code-organization.md) CO-8): generated from `modules.cmake`, so a module cannot exist without its category and nothing registers anything. Plugins get an open runtime range.
 
 ```cpp
-// ez/base/log_categories.hpp : the central table. Adding a module means adding one line here.
-#define EZ_LOG_CATEGORIES(X)                     \
-    X(core,     "core")       X(memory,  "core.memory")  X(platform, "platform")   \
-    X(thread,   "core.thread") X(fs,     "core.fs")      X(engine,   "engine")     \
-    X(state,    "engine.state") X(timebase, "engine.time") X(audio,  "audio")      \
-    X(net,      "net")        X(artnet,  "net.artnet")   X(sacn,     "net.sacn")   \
-    X(midi,     "midi")       X(hw,      "hw")           X(render,   "render")     \
-    X(ui,       "ui")         X(app,     "app")          X(plugin,   "plugin")
-// Starter list; edited as modules are designed.
-
-enum class Cat : u8 { /* generated */ core, memory, …, count,
-                      plugin_first = 64, plugin_last = 127 };     // filled at plugin load
+// ez/log/log.hpp: generated from modules.cmake, one enumerator per module, in table order.
+enum class Category : u8 { base, cvars, log, metrics, app /* , ... as modules are added */ };
+inline constexpr u8 plugin_category_first = 64;   // 64..127: assigned to plugins at load (deferred)
 ```
+
+Sub-categories such as `net.artnet` arrive when sub-modules exist in the table; today every module has exactly one.
 
 | Aspect | Decision |
 |---|---|
 | Storage | `levels[128]`, one byte per category, on its own cache line. Recording reads one byte with a relaxed load. |
-| Names | Dotted, `parent.child`. The dot is a convention for prefix matching, not a hierarchy in code. |
-| Runtime control | A level per category. The word `all` sets every category; a name sets the exact category and every category whose name starts with `name.`. Later settings override earlier ones, so `all:debug,net:trace` means "everything at debug, then `net` and `net.*` at trace". |
-| Plugins | Each loaded plugin is assigned a slot in the runtime range and the name `plugin.<id>`, so `EZ_LOG=plugin.myfx:debug` works like any other category ([`plugins.md`](./plugins.md) §5). |
+| Names | The module's name. `parent.child` once sub-modules exist; the dot is then a convention for prefix matching, not a hierarchy in code. |
+| Runtime control | One cvar per category, `log.level.<module>`, whose value is `inherit` (follow `log.level.all`), a level, or `off`. `--log=all:debug,net:trace` and `EZ_LOG` expand into those cvars; later entries win. Prefix matching for sub-categories comes with sub-categories. |
+| Plugins | *Deferred with the plugin host.* Each loaded plugin is assigned a slot in the runtime range and the name `plugin.<id>`, so `EZ_LOG=plugin.myfx:debug` works like any other category ([`plugins.md`](./plugins.md) §5). The range is reserved; the API is not written. |
 | Floor | A runtime level can never go below the build floor (§1.2): the code for those lines does not exist. |
 
-**Why a central table and not a declaration in each module.** The "all" control and the diagnostics panel need to enumerate categories. A central table gives the enum, the name table and the level array with zero registration logic, which also satisfies L-6 (no static-initializer registration). The cost is that adding a category touches one shared header, the same trade-off as the explicit source lists in B-9.
+**Why the module table and not a declaration in each module.** The "all" control and the diagnostics panel need to enumerate categories. The table gives the enum, the name table, the level cvars and the level array with zero registration logic, which also satisfies L-6 (no static-initializer registration). The cost is that a category can only be a module, which is the intent.
 
 ---
 
@@ -196,7 +189,7 @@ graph LR
 |---|---|---|
 | One ring per thread | SPSC, wait-free for the producer, no CAS | The audio thread's "zero alloc, zero lock" rule ([`threading-and-timing.md`](./threading-and-timing.md) §2); no false sharing between producers |
 | Byte ring with variable-length records | A header plus a payload, a `Skip` record at the wrap | A fixed slot wastes most of itself on a 60-byte line; `log.max_line` becomes a runtime setting; the later implementation needs variable-length argument packs anyway |
-| Preallocated pool | `log.threads_max` rings of `log.ring_kib` each, allocated once at init under memory tag `core/log` | No allocation after init, in any build |
+| Preallocated pool | `log.threads_max` rings of `log.ring_kib` each, allocated once at init under memory tag `core.log` | No allocation on a calling thread after init, in any build. The log thread allocates only when it opens or rotates the session file. |
 | Thread registration | A thread created through the thread system gets a ring at creation. A **foreign thread** (an audio driver's callback thread, a MIDI library's input thread) claims a ring from the pool on its first line with one atomic exchange. | Covers threads we did not create without a second queue type |
 | Ring full | The line is dropped and a per-thread dropped counter increments (a metric). The log thread emits one `N lines dropped on thread X` line when it notices. | Never block, never allocate; losing a debug line is better than a hitch |
 | Pool exhausted | Same as ring full | |
@@ -255,7 +248,7 @@ The later implementation copies the argument pack raw and formats on the log thr
 
 | Sink | Default | Behaviour |
 |---|---|---|
-| **stderr** | On | Every drained line. Colour by level when stderr is a terminal and `NO_COLOR` is unset; plain otherwise. **Never stdout:** stdout belongs to the headless runner's data output, so `ezego-headless … > metrics.json` stays clean. |
+| **stderr** | On | Every drained line. Colour by level when stderr is a terminal and `NO_COLOR` is unset; plain otherwise; `log.color` forces it. `log.stderr` (developer tier) turns the sink off for benchmarks and tools that own stderr. **Never stdout:** stdout belongs to the headless runner's data output, so `ezego-headless … > metrics.json` stays clean. |
 | **File** | **Off** | One file per session, `ezego-YYYYMMDD-HHMMSS.log`, in the OS state directory (Linux `$XDG_STATE_HOME/ezego/logs`, macOS `~/Library/Logs/eZeGo`, Windows `%LOCALAPPDATA%\eZeGo\logs`); the last `log.file.keep` sessions are kept. Written through a preallocated 64 KiB buffer, flushed every `log.file.flush_ms` and **immediately after any batch containing Warn or above**. The first line is a session header: wall-clock start, version, commit, mode, OS. |
 | **History ring** | On | The last `log.history_kib` of rendered lines in memory. Read by the in-app console and diagnostics panel, attached to crash reports (observability §2.3) and hitch reports. |
 | **Tracy** | `profile` builds | At the call site, §4.4. |
@@ -292,6 +285,8 @@ hh:mm:ss.mmm  L  category     thread   message                               <fi
 | `log.file.flush_ms` | Runtime | 1000 | Periodic flush; Warn and above flush at once |
 | `log.file.keep` | Runtime | 10 | Sessions kept |
 | `log.sync` | Runtime, read at init | auto | §5 |
+| `log.stderr` | Runtime, live | on | Console sink; off for benchmarks and tools that own stderr |
+| `log.color` | Runtime, read at init | auto | `auto` = a terminal without `NO_COLOR` |
 | `log.level.<category>` | Runtime, live | floor-dependent | One per category, plus `log.level.all` |
 
 Settings read at init are fixed for the session because they size preallocated memory. Levels change live.
@@ -335,7 +330,8 @@ Each number above is a starting hypothesis in the sense of philosophy §3.6; the
 
 ## 8. Fatal, shutdown and crashes (LG-11)
 
-- **Fatal is synchronous.** `EZ_LOG_FATAL` formats on the caller, writes stderr immediately, hands the text and every ring's undrained records to the crash reporter, which writes the report with the history ring and the flight recorder attached, then traps. It never returns. Assertion failures and the terminate handler take the same path, so there is one report format.
+- **Fatal is synchronous.** `EZ_LOG_FATAL` formats on the caller, drains every ring, writes its own line to every sink, flushes, calls the fatal hook (where the crash reporter attaches the history ring and the flight recorder, when it exists), then ends the process. It never returns.
+- **Assertions go through the logger.** While the logger runs it is the base assert handler ([`base.md`](./base.md) BA-4): a failed assertion is written after every pending line, on every sink, before the debugger break. The terminate handler takes the same path once the crash reporter exists, so there is one report format.
 - **A crash reads the rings directly.** The log thread may be mid-write when a fault arrives, so the crash reporter does not depend on it: it copies the history ring and each thread's undrained ring as they are. Rings and the history ring live in static or init-time storage so this needs no allocation inside the handler.
 - **Shutdown** stops producers, drains every ring once more, flushes and closes the file, then releases the pool. The logger shuts down after everything that logs and before the profiler and the memory system, the reverse of the start order in observability §3.
 - **Start order.** Memory, then profiler, then logger, then everything else. The logger needs the memory system for its rings, and the log thread names itself with Tracy, which requires the profiler to be running first (found by the experiment, observability §3).
@@ -477,7 +473,10 @@ Nothing else blocks accepting the design. Everything below has a stated default 
 | Ring, pool and history sizes | §6.1 | Measured in debug builds under trace load |
 | Log thread wake: periodic only, or also signalled by non-RT producers for lower latency | Periodic | If 20 ms latency is ever a problem |
 | Structured file format (JSON lines) next to the text file, for tooling | Text only | When a tool needs to ingest logs |
-| The deferred-formatting swap (§4.5) | First implementation | A measurement shows call-site formatting on the frame thread matters |
+| The deferred-formatting swap (§4.5) | First implementation; measured cheaper than estimated (§13.1) | A measurement shows call-site formatting on the frame thread matters |
+| Plugin categories and `host->log` | Range 64..127 reserved, no API | The plugin host |
+| Sub-categories (`net.artnet`) and prefix matching | One category per module | Sub-modules in the module table |
+| The Windows sources (`os_windows.cpp`) | Written, never compiled | A Windows machine |
 | `-Werror=format` locally, or only in the `check` preset | Only in `check` and CI, like other warnings | Warnings policy in the foundations document |
 | Trace lines in `profile` builds for a one-off investigation | Not available; `profile` floor is Info | A personal preset could set `EZ_LOG_LEVEL=0` on `profile` if ever needed |
 
@@ -502,7 +501,7 @@ The call-site formatting the first implementation uses is cheaper than estimated
 pressure for the deferred-formatting swap of §4.5. The realtime variant and the flood guard cost
 more than estimated; both are bounded and lock-free.
 
-### 13.2 What the implementation settled
+### 13.2 What the implementation settled (now reflected in the body above)
 
 | Topic | As implemented |
 |---|---|

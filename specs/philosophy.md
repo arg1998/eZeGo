@@ -124,12 +124,12 @@ These are deliberately *out of scope now* to keep us honest; each has a deferred
 
 > These are written down precisely so we don't mistake them for decisions.
 
-- **C++ standard:** currently C++17. Whether to move to C++20/23 (concepts, `std::span`, designated initializers, `<bit>`) is **open**.
+- **C++ standard:** C++20, no C++23 features ([`build-system.md`](./build-system.md) B-16, decided 2026-10-08).
 - **Vendor library linking (static vs dynamic):** **proposed: static** for everything built from source; plugins are dynamic by nature. Reasoning and trade-offs in [`linking.md`](./linking.md) *(proposed 2026-10-04, awaiting confirmation)*.
 - **The domain model's concrete shape** (fixtures, groups, scenes, cues, patches, the node-graph component format) is **not yet designed** — only the *style* (handle/POD) is decided.
 - **The novel UX** beyond "game/touch-native, scales with expertise" is **largely unspecified** and will shape Layer-1 data decisions when detailed.
 - **Audio library** (RtAudio — sibling of the already-vendored RtMidi — vs. miniaudio) is **open**.
 - **Networking stack** (for Art-Net/sACN/transport) is **open**; leaning toward a minimal UDP layer over pulling in Boost.Asio.
-- **Testing frameworks** for unit/integration/e2e/scenario-sim/smoke are **open**.
-- **GCC support** is currently hard-`#error`'d; whether to soften to "unsupported but unblocked" for Linux hobbyists is **open**.
+- **Testing frameworks:** doctest plus four small purpose harnesses ([`testing.md`](./testing.md) T-1, decided 2026-10-08).
+- **GCC support:** unsupported but unblocked. The toolchain accepts `-DEZ_ALLOW_GCC=ON`, detection never rejects it, and nothing promises it stays green (B-11).
 - The **performance budgets in §3 are starting hypotheses** to be validated by measurement, not laws handed down.

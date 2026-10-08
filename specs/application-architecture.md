@@ -135,7 +135,7 @@ Everything OS-specific sits behind a **capability-based** interface that *exploi
 |---|---|---|
 | **Entry** | A plain `main()` in `src/apps/<name>/main.cpp` that wires modules ([`code-organization.md`](./code-organization.md) CO-6); `WinMain` and app-bundle entries come with packaging | Present |
 | **Memory** | platform alloc / aligned alloc → memory system | Thin wrappers today; expands with use |
-| **Clock** | monotonic, ns-resolution reference clock | **Linux impl is currently a stub — first foundation task** |
+| **Clock** | monotonic, ns-resolution reference clock | **Does not exist yet; the platform module is the next foundation task.** The logger and cvars carry stubs. |
 | **Windowing** | `Window`/`Display` over **GLFW** | OS-native frames/title bars; multi-window, multi-monitor, DPI. *Nothing else in the app talks to GLFW directly* — so custom chrome or an SDL3 swap is a one-module change |
 | **Filesystem** | abstracted; **all paths normalized to unix form** | Windows paths translated/handled like Linux; home/temp/config/system locations normalized |
 | **Hardware comms** | USB / WiFi / Bluetooth transports | Higher protocols (e.g. MIDI) built atop these; see §6 |
@@ -145,7 +145,7 @@ Everything OS-specific sits behind a **capability-based** interface that *exploi
 
 - **64-bit only** (enforced).
 - **Clang-primary**, including **clang-cl on Windows** for one toolchain across all platforms; MSVC supported as fallback. *(GCC currently hard-errored — softening is open.)*
-- **C++17** *(move to C++20/23 is open).*
+- **C++20**, no C++23 features (B-16).
 
 ---
 
@@ -171,7 +171,7 @@ graph TD
 - **Dependency manifest** — one human-readable file lists every dependency with name, version, source URL, tag/branch and **pinned commit**. The tag or branch is recorded for humans; **the commit is what the build pins** (reproducibility is incompatible with tracking a moving branch). Fetched by an explicit step (`init` / `deps`); configure and build never touch the network. *No git submodules.*
 - **Developer commands** are plain CMake (`cmake -P scripts/<task>.cmake`, `cmake --workflow --preset <mode>`, `ctest --preset <mode>`) with an optional `ez` launcher. OS-specific work lives in `scripts/linux`, `scripts/macos`, `scripts/windows`; commands unsupported on a platform fail clearly.
 - **Build modes** are presets, each with its own build tree, so switching never requires clearing a cache: *debug* (assertions, logging), *profile* (release code generation plus Tracy zones, frame marks and memory instrumentation; **no global `malloc` hook outside this mode** — see [`observability.md`](./observability.md) §4), *release* (optimized, debug/trace logging compiled out).
-- **Current vendored libs** (to migrate off submodules into the manifest): ImGui (docking), GLFW, RtMidi, Tracy, nlohmann/json, IconFontCppHeaders, function2. Boost is currently a `find_package` system dependency used only for serial — **proposed for removal** under the minimal-deps philosophy.
+- **Dependencies** are listed in `dependencies.json` (today: Dear ImGui, GLFW, doctest, Tracy). RtMidi, nlohmann/json, function2 and IconFontCppHeaders from the prototype return when the modules that need them are designed; Boost is gone.
 - **Linking: static** for everything built from source. Only OS, GPU, windowing and audio interfaces stay dynamic; plugins are the one first-class dynamic boundary, with isolation rules for symbol visibility and duplicated state. See [`linking.md`](./linking.md).
 
 ---
@@ -219,6 +219,6 @@ The headless constraint (engine core has no GPU/window/UI dependency) exists *sp
 - **Mixing mental model** — explicit layer stack (Resolume/Photoshop-like) vs a novel UX presentation — open.
 - **Per-attribute merge defaults** — HTP-intensity / LTP-color as default, blend-mode-overridable — to confirm.
 - **Novel UX specifics** — largely unspecified; will reshape Layer-1 decisions when detailed. The UI widget vocabulary waits for them ([`ui-system.md`](./ui-system.md) U-8).
-- **GCC support** — currently blocked; softening is open.
+- **GCC support** — unsupported but unblocked (B-11).
 - **Serialization format** (JSON vs binary, versioning/migration) — open.
 - **Performance budgets** throughout — starting hypotheses, to be validated by measurement.

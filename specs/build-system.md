@@ -371,13 +371,13 @@ Tools for finding slow spots: Clang's `-ftime-trace` with ClangBuildAnalyzer, an
 
 One compiler family means one warning set and one optimizer to reason about. The three platforms still use **three different C++ standard libraries**, so the STL profiled on Linux is not the STL users run on Windows. That reinforces philosophy §2.2: the less the hot path leans on `std::`, the more portable the measurements.
 
-GCC stays unsupported for now. Minimum compiler versions and OS floors are open questions (§6).
+GCC is unsupported but unblocked: `-DEZ_ALLOW_GCC=ON` lets the toolchain accept it, detection never rejects it (`detect.h` is shared with plugins, which may use any compiler), and nothing promises it stays green. Minimum compiler versions and OS floors are open questions (§6).
 
 ### B-12 — Tests
 
 - `ctest --preset <mode>` runs tests in any mode's tree. Tests are part of the main project, not a second one.
-- Labels select subsets: `unit`, `integration`, `scenario`, `smoke`, `perf`. Example: `ctest --preset debug -L unit`.
-- Tests link the headless modules only. Anything that needs a GPU is labelled `gpu` and excluded by default.
+- Labels select subsets: `unit`, `integration`, `smoke`, `lint` and `gpu` today; `scenario`, `fuzz`, `soak` and the rest as [`testing.md`](./testing.md) adds them. Example: `ctest --preset debug -L unit`.
+- Tests link the headless modules only. Anything that needs a GPU is labelled `gpu`, excluded by the mode presets, and run on demand through the `gpu` test preset (`./ez test gpu`).
 - A `check` workflow preset (configure, build, test) is the pre-merge gate. CI runs the same canonical commands as developers.
 - The test framework: doctest, proposed in [`testing.md`](./testing.md) T-1, which also extends the label list above.
 
@@ -438,6 +438,14 @@ Three categories, three homes. Tools are programs we *run* during development, n
 **Cost.** Two places to touch when a command changes. The how-to pages stay short and point to the design documents for reasoning.
 
 ---
+
+### B-16 — Language standard: C++20
+
+**Decision.** `CMAKE_CXX_STANDARD 20`, extensions off, no C++23 features. Decided 2026-10-08; the build had used it since 2026-10-05 while the philosophy still said C++17.
+
+**Why.** The foundations lean on it: designated initializers for cvar declarations, `__VA_OPT__` in the log macros, `constinit` for the cvar objects, `if constexpr` and `std::span`. All three standard libraries we ship with (libstdc++, libc++, MSVC STL) support C++20 fully at the compiler floor of B-11; C++23 support is uneven across them, so a C++23 feature would be a per-platform risk.
+
+**Cost.** None today. Revisited when every toolchain floor has complete C++23 support and a feature earns it (`std::expected` is the likely first).
 
 ## 4. Proposed repository layout
 

@@ -45,13 +45,13 @@ graph TD
 
 ```cpp
 template <class T>
-struct CVar {                      // one static object per variable; constant-initialised, no constructor runs
-    std::atomic<T> value;          // offset 0. The hot path. A relaxed load is a plain mov on x86-64 and arm64.
-    std::atomic<u32> generation;   // same cache line. Incremented on every change; owners compare it (§4).
-    u8 source;                     // where the current value came from (§6). Written by the registry only.
-    u8 locked;                     // set for Startup cvars once init completes (§3).
-    const Meta* meta;              // the cold path: name, help, range, default, flags.
-    T value() const { return value_.load(std::memory_order_relaxed); }
+class CVar {                       // one static object per variable; constant-initialised, no constructor runs
+public:
+    T value() const { return value_.load(std::memory_order_relaxed); }   // the hot path: one plain load
+    u32 generation() const;        // incremented on every change; owners compare it (§4)
+private:
+    std::atomic<T> value_;         // offset 0
+    State state_;                  // generation, source, the locked flag, and a pointer to the Meta (cold)
 };
 ```
 

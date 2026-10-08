@@ -13,7 +13,7 @@ This folder (`specs/`, formerly `.agent/`) holds the design intent for eZeGo. St
 | [`plugins.md`](./plugins.md) | Native plugin system over a C ABI | Living, proposal |
 | [`build-system.md`](./build-system.md) | Build, modes, commands, dependency manifest, `doctor` | **Accepted and implemented 2026-10-05** |
 | [`linking.md`](./linking.md) | Static vs dynamic linking, runtimes, plugin isolation | **Proposed 2026-10-04** |
-| [`observability.md`](./observability.md) | Profile build, always-on telemetry, memory tracking | **Proposed 2026-10-04** |
+| [`observability.md`](./observability.md) | Profile build, always-on telemetry, memory tracking | **Proposed 2026-10-04**; the profiler facade implemented 2026-10-08, the always-on tier deferred |
 | [`ui-system.md`](./ui-system.md) | UI API boundary: immediate mode, own vocabulary, widgets / canvas / viewport layers | **Proposed 2026-10-05** |
 | [`logging.md`](./logging.md) | Log API, levels, categories, per-thread rings and log thread, sinks, runtime control, costs | **Accepted and implemented 2026-10-08** |
 | [`cvars.md`](./cvars.md) | Runtime variables: one registry, zero-cost reads, mutability, validation, persistence, tiers and developer mode, console and panel | **Accepted and implemented 2026-10-08** |
@@ -45,6 +45,7 @@ Status values: **Proposed** (written up with trade-offs, awaiting confirmation),
 | B-13 | VS Code as a complete UI: tracked tasks/launch/extensions with no machine paths; `init` generates a workspace file with discovered paths | Accepted 2026-10-05 |
 | B-14 | Dev tools pinned in the manifest; verified prebuilt if available, else built from source; installed per user with a provenance file | Accepted 2026-10-05 |
 | B-15 | Contributor how-to documentation lives in `docs/`, separate from design intent in `specs/` | Accepted 2026-10-05 |
+| B-16 | C++20, no C++23 features | Accepted 2026-10-08 |
 
 ### Linking — [`linking.md`](./linking.md)
 
@@ -189,6 +190,8 @@ Status values: **Proposed** (written up with trade-offs, awaiting confirmation),
 | Synchronous logger writing to the platform console; reversed level enum; fixed 20 KiB format buffer | prototype `src/core/logger/`, `configs.hpp` | Per-thread rings and a log thread, ascending levels matching `EZ_LOG_LEVEL`, runtime line size (LG-3, LG-5, LG-9) |
 | `release` log floor at Warn | `build-system.md` B-3 table, `observability.md` §6, `cmake/modes.cmake`, `docs/build-modes.md` | Info floor and Info runtime default (LG-3), accepted and applied 2026-10-08 in the specs, `cmake/modes.cmake` and `docs/build-modes.md` |
 | Target names in the B-9 graph: `ez_plugin_host`, `ez_sdk` as a target under `src/`, one `ez_base` holding memory, platform, logging and metrics | `build-system.md` B-9 | A `plugin` module, `sdk/` at the repository root, one module per directory with `base` holding only the primitives (CO-1, CO-7, CO-9) |
+| C++17 "current", C++20 "open" | `philosophy.md` §6, `application-architecture.md` §4 and §9 | C++20 (B-16) |
+| GCC "hard-errored" | `philosophy.md` §6, `application-architecture.md` §9, `base.md` | Unsupported but unblocked: the toolchain gates, detection never does (B-11, BA-3) |
 | Testing frameworks "open" | `philosophy.md` §6, `application-architecture.md` §8 and §9, `build-system.md` B-12 and §6 | doctest plus small purpose harnesses (T-1); the test kinds and labels in T-2 extend B-12's list |
 
 ## Tooling (implemented 2026-10-05)

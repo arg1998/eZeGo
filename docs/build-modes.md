@@ -1,7 +1,8 @@
 # Build modes
 
 Each mode is a CMake preset with **its own build tree** (`build/<preset>/`). Switching never
-needs a cache wipe; switching to a mode that is already built rebuilds nothing.
+needs a cache wipe; switching to a mode that is already built rebuilds nothing. `gpu` is a test
+preset on the debug tree, not a mode.
 
 | Preset | For | Optimization | Asserts | Logs | Tracy | Memory events |
 |---|---|---|---|---|---|---|
@@ -10,6 +11,7 @@ needs a cache wipe; switching to a mode that is already built rebuilds nothing.
 | `release` | shipping | `-O3` | off | info+ | compiled out | off |
 | `asan` | memory errors | debug + Address/UB sanitizers | on | all | off | off |
 | `tsan` | data races (not on Windows) | debug + Thread sanitizer | on | all | off | off |
+| `check` | the pre-merge gate (`./ez check`) | debug, plus clang-tidy on every file and warnings as errors | on | all | off | off |
 
 Every mode keeps frame pointers and full symbols. `release` splits symbols into `ezego.debug`
 next to the binary (Linux) and links the C++ runtime statically.
@@ -20,8 +22,8 @@ next to the binary (Linux) and links the C++ runtime statically.
 ./ez build profile                # cmake --workflow --preset profile
 ./ez test profile                 # ctest --preset profile
 ./ez test debug -L unit           # only one label: unit | scenario | smoke
-ctest --test-dir build/debug -L gpu   # GUI smoke test (needs a display), excluded by default
-./ez check                        # pre-merge gate: configure + build + test debug
+./ez test gpu                     # the tests that need a display and a GPU (opt-in)
+./ez check                        # pre-merge gate: lint, build/check with clang-tidy and -Werror, every test
 ./ez clean profile                # delete build/profile
 ```
 

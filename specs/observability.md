@@ -37,7 +37,7 @@ graph LR
 **Rules.**
 
 - No first-party file includes a Tracy header. Only the facade's backend does. Replacing or adding a profiler backend later touches one module.
-- `EZ_METRIC_*` entry points exist in every build. `EZ_PROF_*` entry points compile to nothing outside `profile`.
+- `EZ_METRIC_*` entry points exist in every build *(deferred: not implemented until the metrics registry is designed)*. `EZ_PROF_*` entry points compile to nothing outside `profile` *(implemented 2026-10-08)*.
 - A system-level scope macro does both: it always feeds that system's timer, and in `profile` builds it also opens a Tracy zone.
 - In `profile` builds every metric is mirrored to Tracy as a plot, so always-on numbers appear on the Tracy timeline without extra code.
 
@@ -128,7 +128,7 @@ This is why the always-on tier is instrumented at **system** granularity (tens o
 |---|---|---|
 | On-demand mode | On | Events are recorded only while a viewer is connected, so an idle profile build stays light |
 | Network exposure | Localhost only and no LAN broadcast by default; a build option enables remote capture | Tracy listens on a network port. Remote capture is useful (profile the show machine from a laptop) but should be a deliberate choice. |
-| Lifetime | Manual | The profiler starts after the memory system and stops before it, which the allocation hooks in §4 depend on. It must also start **before any thread that registers itself with Tracy** (found by the experiment: the log thread crashed naming itself before startup). Order: memory → profiler → logger → everything else; shutdown in reverse. |
+| Lifetime | Manual | The profiler starts after the memory system and stops before it, which the allocation hooks in §4 depend on. It must also start **before any thread that registers itself with Tracy** (found by the experiment: the log thread crashed naming itself before startup). Order: settings (cvars: static storage that everything reads), memory, profiler, logger, everything else; shutdown in reverse. *Since 2026-10-08 the facade is inert outside the profiler's lifetime, so an early thread no longer crashes; the order remains the rule.* |
 | GUI | Built from the same pinned source as the client | Client and GUI must use the same protocol version ([`build-system.md`](./build-system.md) B-14) |
 
 **Tracy never ships in `release`.** It opens a listening socket, and its capture grows without bound while a viewer is attached.

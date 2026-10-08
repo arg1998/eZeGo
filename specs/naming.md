@@ -194,7 +194,7 @@ Cvars, log categories, metrics and memory tags are strings that users and suppor
 | Characters | Segments of `[a-z0-9_]+` joined by `.`; at most 63 characters |
 | First segment | A module from the central module table (§3.3), or `plugin.<id>` |
 | Hierarchy | `module.sub.name`; the dot is the only separator |
-| Enum values in files and on the command line | The `lower_snake_case` form of the enumerator, generated from it: `AudioApi::CoreAudio` is written `core_audio`; `Level::Warn` is `warn` |
+| Enum values in files and on the command line | The `lower_snake_case` form of the enumerator, listed beside the enum in value order: `AudioApi::CoreAudio` is written `core_audio`; `Level::Warn` is `warn`. Generating the list from the enumerators is deferred until a second module declares an enum cvar. |
 | Plugin ids | Same character set; a plugin's cvars, category and tag all use the same id |
 
 **Consequence for memory tags.** [`observability.md`](./observability.md) §2.5 and §4 write tags as `engine/state`, `vendor/glfw`, `plugin/<id>`. They become `engine.state`, `vendor.glfw`, `plugin.<id>` when that document is next revised, so a user sees one spelling in the diagnostics panel, the console and the settings file.
@@ -279,7 +279,7 @@ graph LR
 | SDK is C (§10) | Headers compiled as C in the test build; `sdk/.clang-tidy` | | Error |
 | Guidelines (verb pairs, predicates, role suffixes) | Review | | |
 
-**The `.clang-tidy` that encodes §2 to §7** (sketch; the exact option names are checked against the pinned version when it is set up):
+**The `.clang-tidy` that encodes §2 to §7** (an excerpt; the tracked `.clang-tidy` at the repository root is the full file):
 
 ```yaml
 Checks: '-*,readability-identifier-naming,google-build-using-namespace,
@@ -330,23 +330,22 @@ CheckOptions:
 
 ---
 
-## 14. What changes in the existing code
+## 14. What the prototype's removal renamed (record, 2026-10-08)
 
-The prototype under `src/core/` and `legacy/` is replaced, not renamed, so this is a map rather than a task list. It also shows where this document corrects earlier specs.
+The prototype under `src/core/` and `src/application/` was removed on 2026-10-08. For the record, what its names became:
 
-| Today | Under this document | Rule |
+| Was | Now | Rule |
 |---|---|---|
-| `initLoggingSystem`, `platformAllocateMemory`, `profilerMessage`, `ezAllocate` | `ez::log::init`, `ez::platform::allocate`, `ez::profiler::message`, `ez::mem::allocate` | §2, §5 |
-| `s8 s16 s32 s64` | `i8 i16 i32 i64` | §4.1, open question |
-| `enum LogLevel { EZ_LOG_LEVEL_FATAL = 0, … }` in C++ | `enum class Level : u8 { Trace, …, Fatal }`; the C form stays in the SDK | §4, §10 |
-| `__FILENAME__` | A reserved identifier; replaced by a source-location helper under `EZ_` | §7 |
+| `initLoggingSystem`, `profilerMessage`, `platformGetClockTickNs` | `ez::log::init`, the profiler hook in `ez::metrics`, no clock yet (platform module) | §2, §5 |
+| `s32` and friends | `i32` and friends | §4.1 |
+| `enum LogLevel { EZ_LOG_LEVEL_FATAL = 0, … }` | `enum class Level : u8 { Trace, …, Fatal }` | §4 |
+| `__FILENAME__` | `__FILE__`, shortened when a line is rendered | §7 |
 | `EZ_CONFIG_LOG_BUFFER_SIZE` | `EZ_LOG_MAX_LINE` at build time, `log.max_line` at runtime | §7, §9 |
-| `plat_linux.cpp`, `plat_mac.cpp`, `plat_win32.cpp` | `platform_linux.cpp`, `platform_macos.cpp`, `platform_windows.cpp` | §8 |
-| `tests/test_core.cpp` | `tests/core/<topic>_test.cpp` | §8 |
+| `plat_linux.cpp`, `plat_mac.cpp`, `plat_win32.cpp` | `os_posix.cpp`, `os_windows.cpp`, `paths_posix.cpp`, … | §8 |
+| `tests/test_core.cpp` | `tests/<module>/<topic>_test.cpp` | §8 |
 | `src/core/` | `src/ez/<module>/` | §3, §8 |
-| Memory tags `engine/state`, `vendor/glfw` in `observability.md` | `engine.state`, `vendor.glfw` | §9 |
-| `hw_watch.get()` in the `cvars.md` and `logging.md` sketches | `cv_hw_watch.value()` | §5, §6 |
 | `.clang-format` `IncludeBlocks: Preserve` | `Regroup` with first-party, third-party and system categories | §8 |
+| Memory tags `engine/state` in `observability.md` | `engine.state`, applied when that document is revised | §9 |
 
 ---
 

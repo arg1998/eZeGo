@@ -7,11 +7,11 @@ The design is [`specs/testing.md`](../specs/testing.md). This page is how to run
 ```bash
 ./ez test                     # debug tree: unit + integration + smoke, headless, fast
 ./ez test release             # the same tests in another tree
-./ez test debug -L unit       # one label: unit | integration | smoke | lint (check tree) | gpu
+./ez test debug -L unit       # one label: unit | integration | smoke | lint (check tree)
 ./ez test debug -R "base:"    # cases whose name matches a regex
 ./ez test asan                # same tests under Address and UB sanitizers (builds build/asan)
 ./ez check                    # the gate: lint + clang-tidy + -Werror + every test, random order
-ctest --preset debug -L gpu   # opt-in: needs a display
+./ez test gpu                 # opt-in: the tests that need a display and a GPU
 ```
 
 In VS Code, every test case appears in the Testing panel; run or debug one with a click.

@@ -24,7 +24,7 @@
 | **Smoke** | Does the real binary start, draw frames and exit cleanly? | The app with a window, N frames, exit code 0 | Seconds | `gpu` |
 | **Sanitizer runs** | Memory errors, data races, realtime violations | The whole suite under the `asan`, `tsan`, `rtsan` presets | Minutes | by preset |
 | **Fuzz** | Does hostile input crash a parser? | Project files, settings files, Art-Net and sACN packets, plugin manifests, through libFuzzer | Bounded by a time limit | `fuzz` |
-| **Bench** | What does this cost, and did it change? | Micro-benchmarks of hot operations plus scenario metrics | Seconds; needs a quiet machine for stable numbers | `bench` |
+| **Bench** | What does this cost, and did it change? | Micro-benchmarks of hot operations plus scenario metrics | Seconds; needs a quiet machine for stable numbers | none; run by `ez bench` |
 | **Scenario** | Same input, same output? | A recorded project and input stream replayed by the headless runner; per-frame output hashed against a golden file | Seconds, faster than real time with the virtual clock | `scenario` |
 | **ABI** | Can a plugin built with another compiler still load? | A test plugin built with GCC or MSVC, loaded by the Clang host; the SDK compiled as C | Seconds | `abi` |
 | **Soak** | Does it survive a show? | The headless engine driving a virtual rig for hours: memory growth, audio dropouts, output jitter | Hours | `soak` |
@@ -79,7 +79,7 @@ The requirement, in Amir's words: fast, easy to run, lightweight but proper, not
 
 Anything beyond this list is a reason to revisit the framework choice, not to grow the harnesses.
 
-**Exceptions.** The modules are built without exceptions. Test files are built with them, because doctest's `REQUIRE` leaves a test case by throwing. The exception never crosses into module code; a failing assertion inside a module takes the crash path and is tested through the subprocess runner.
+**Exceptions.** When the errors spec turns exceptions off in modules (proposed in discussion, not decided), test files keep them on, because doctest's `REQUIRE` leaves a test case by throwing. The exception never crosses into module code; a failing assertion inside a module takes the crash path and is tested through the subprocess runner.
 
 ---
 
@@ -114,10 +114,10 @@ tests/
 | Rule | Decision |
 |---|---|
 | `ez test` | Builds and runs `unit` and `integration` of the `debug` tree. Target: under 30 seconds on the reference laptop, to be measured. No display, no network beyond loopback, no device. |
-| Opt-in | `ez test -L gpu` and friends by label; `ez test asan` by preset; `ez fuzz`, `ez bench` by command. A `gpu` or `hardware` test whose environment is missing reports **skipped**, never failed. |
+| Opt-in | `ez test gpu`: a test preset that includes only that label, because a preset's exclusion cannot be undone with `-L`; `ez test asan` by preset; `ez fuzz`, `ez bench` by command. A `gpu` or `hardware` test whose environment is missing reports **skipped**, never failed. |
 | Editor | Test Explorer through CMake Tools (B-13): run or debug one case with a click; the same CTest entries as the terminal. |
 | Failure output | doctest's decomposed expression, file and line, clickable through the problem matcher. Tests run with the log file sink on, so a failure has its log beside it. |
-| Independence | A test case shares no mutable state with another and does not depend on order. The `check` preset runs with doctest's random order and prints the seed, so coupling shows up before it bites. |
+| Independence | A test case shares no mutable state with another and does not depend on order. The `check` preset runs cases in random order (CTest's scheduler). No seed is needed: each case is its own process with its own temp directory, so order could only leak through shared files, and those are per case. |
 | Time | No sleeps; time comes from the virtual clock (T-5). A `unit` case over one second and an `integration` case over ten fail by CTest timeout. |
 | Determinism | No wall clock, no real network except loopback, no reliance on the machine's locale or environment. |
 | Naming | A test case name is a sentence a human can read: `TEST_CASE("ring: drops the line when full")`. Module first, colon, behaviour. |

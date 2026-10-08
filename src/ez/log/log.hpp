@@ -236,7 +236,7 @@ template <class... Args>
 // thread renders it as "literal = value". No formatting on the caller, wait-free.
 #define EZ_LOG_RT(cat, lvl, literal, value)                                                                \
     do {                                                                                                   \
-        if constexpr (EZ_LOG_LEVEL <= ::ez::u8(::ez::log::Level::lvl)) {                                   \
+        if constexpr (int(EZ_LOG_LEVEL) <= int(::ez::log::Level::lvl)) {                                   \
             if (::ez::log::enabled(::ez::log::Category::cat, ::ez::log::Level::lvl)) {                     \
                 ::ez::log::detail::emit_rt(::ez::log::Category::cat, ::ez::log::Level::lvl, "" literal "", \
                                            ::ez::u64(value));                                              \

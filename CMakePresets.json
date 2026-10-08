@@ -74,7 +74,15 @@
       "name": "tsan", "inherits": "_base", "configurePreset": "tsan",
       "condition": { "type": "notEquals", "lhs": "${hostSystemName}", "rhs": "Windows" }
     },
-    { "name": "check", "inherits": "_base", "configurePreset": "check", "execution": { "noTestsAction": "error", "timeout": 120, "scheduleRandom": true } }
+    { "name": "check", "inherits": "_base", "configurePreset": "check", "execution": { "noTestsAction": "error", "timeout": 120, "scheduleRandom": true } },
+    {
+      "name": "gpu",
+      "displayName": "gpu: the tests that need a display and a GPU, in the debug tree (opt-in)",
+      "configurePreset": "debug",
+      "output": { "outputOnFailure": true },
+      "filter": { "include": { "label": "gpu" } },
+      "execution": { "noTestsAction": "error", "timeout": 120 }
+    }
   ],
   "workflowPresets": [
     {

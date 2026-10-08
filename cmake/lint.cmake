@@ -29,8 +29,11 @@ endif()
 # Strict warnings, clang-tidy and -Werror for one first-party target.
 function(ez_strict target)
   # N-7: -Wundef turns a misspelled feature macro in #if into a warning instead of a silent 0;
-  # -Wreserved-identifier catches names the implementation owns (__X, _Capital).
-  target_compile_options(${target} PRIVATE -Wundef -Wreserved-identifier)
+  # -Wreserved-identifier (Clang) catches names the implementation owns (__X, _Capital).
+  target_compile_options(${target} PRIVATE -Wundef)
+  if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    target_compile_options(${target} PRIVATE -Wreserved-identifier)
+  endif()
   if(EZ_WERROR)
     if(MSVC)
       target_compile_options(${target} PRIVATE /WX)
