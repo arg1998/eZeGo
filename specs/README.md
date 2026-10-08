@@ -15,6 +15,9 @@ This folder (`specs/`, formerly `.agent/`) holds the design intent for eZeGo. St
 | [`linking.md`](./linking.md) | Static vs dynamic linking, runtimes, plugin isolation | **Proposed 2026-10-04** |
 | [`observability.md`](./observability.md) | Profile build, always-on telemetry, memory tracking | **Proposed 2026-10-04** |
 | [`ui-system.md`](./ui-system.md) | UI API boundary: immediate mode, own vocabulary, widgets / canvas / viewport layers | **Proposed 2026-10-05** |
+| [`logging.md`](./logging.md) | Log API, levels, categories, per-thread rings and log thread, sinks, runtime control, costs | **Proposed 2026-10-08, not implemented** |
+| [`cvars.md`](./cvars.md) | Runtime variables: one registry, zero-cost reads, mutability, validation, persistence, tiers and developer mode, console and panel | **Proposed 2026-10-08, not implemented** |
+| [`naming.md`](./naming.md) | Naming and namespaces: three shapes, prefixes and suffixes, files, registry names, the C SDK mapping, enforcement by clang-tidy and a lint script | **Proposed 2026-10-08, not enforced** |
 
 ## Decision register
 
@@ -76,6 +79,60 @@ Status values: **Proposed** (written up with trade-offs, awaiting confirmation),
 | U-7 | First-party `ui_native` escape hatch, never for plugins or stabilized screens; design to be revisited | Proposed |
 | U-8 | Widget vocabulary designed after the UX designs are provided | Proposed |
 
+### Logging — [`logging.md`](./logging.md)
+
+| ID | Decision | Status |
+|---|---|---|
+| LG-1 | One API: `EZ_LOG_<LEVEL>(category, "literal", args...)`, flood guards, and a realtime variant; printf-style; a macro over a variadic template so argument types are known | Proposed |
+| LG-2 | Caller rules enforced at compile time: literal format string, plain-value arguments, single evaluation, truncation; they make the implementation swappable | Proposed |
+| LG-3 | Six levels defined by audience and volume; logs are events, metrics are rates; Trace is the only per-frame level; release floor and runtime default are Info | Proposed; the release floor accepted 2026-10-08 |
+| LG-4 | Categories from a central compile-time table plus a runtime range for plugins; a runtime level per category, `all` and prefix matching | Proposed |
+| LG-5 | Asynchronous: one SPSC byte ring per thread with variable-length records, a preallocated pool for foreign threads, one low-priority log thread draining periodically; no allocation after init, no I/O on callers, drop-and-count when full | Proposed |
+| LG-6 | First implementation formats at the call site; deferred formatting is a later swap behind the same API; profile builds always format at the call site for Tracy | Proposed |
+| LG-7 | Sinks: stderr never stdout; file optional and off by default with periodic flush and immediate flush on Warn+; history ring; Tracy messages in profile; synchronous console when a debugger is attached | Proposed |
+| LG-8 | Record fields fixed: ticks, frame, level, category, thread, file, line, payload; encoding free to change | Proposed |
+| LG-9 | Sizes: build-time hard cap `EZ_LOG_MAX_LINE`, runtime `log.max_line` (512 default), ring and history sizes read at init | Proposed |
+| LG-10 | Runtime control through one mechanism with four doors: defaults < settings file < environment `EZ_LOG` < command line `--log` < in-app console | Proposed |
+| LG-11 | Fatal is synchronous and routes to the crash reporter; the crash path reads rings directly; start after memory and profiler, shut down in reverse | Proposed |
+| LG-12 | Plugins log printf-style through the host table into their own `plugin.<id>` category | Proposed |
+
+### Runtime variables — [`cvars.md`](./cvars.md)
+
+| ID | Decision | Status |
+|---|---|---|
+| CV-1 | One registry of typed application settings with metadata; command line, environment, file, console, panel, reports and docs are views over it | Proposed |
+| CV-2 | A cvar is a `constinit` static object with its value at offset 0; a read is one relaxed load at a fixed address; metadata is reached from the object only on cold paths | Proposed |
+| CV-3 | Metadata: name with the module as first segment, type, default, range, mutability, tier, flags, mandatory help, aliases | Proposed |
+| CV-4 | Mutability `Const` / `Startup` / `Live`; `Startup` locked after init, editable in the panel as a persisted value marked "after restart" | Proposed |
+| CV-5 | Main thread is the only writer; console and panel writes are queued and applied at the frame boundary; a generation counter per cvar; no callbacks out of the registry | Proposed |
+| CV-6 | Scalars are relaxed atomics readable from any thread; strings are `Startup` or main-thread only | Proposed |
+| CV-7 | Validation: startup errors are collected and fail fast with a readable message and `--reset-settings`; runtime errors are rejected, the previous value kept, a warning shown; unknown names are preserved, not errors | Proposed (policy chosen by Amir 2026-10-08) |
+| CV-8 | Precedence at startup defaults < file < environment < command line; the user wins afterwards; provenance stored per cvar and listed in reports | Proposed |
+| CV-9 | Persist only explicit overrides, flat `name = value` text file per user, atomic debounced write off the frame thread, aliases for renames | Proposed |
+| CV-10 | Tiers `User` / `Advanced` / `Developer` / `Hidden` control visibility only; developer mode is the cvar `app.developer`, off by default, user-enabled | Proposed |
+| CV-11 | Explicit per-module registration; the first name segment must exist in the central module table shared with log categories; self-checks at registration | Proposed |
+| CV-12 | Plugins declare cvars through the host table under `plugin.<id>.`, removed on unload, persisted values retained | Proposed |
+| CV-13 | Application configuration only; project data stays in the project model; a second instance of the engine is the path if project settings need it | Proposed, boundary deferred |
+| CV-14 | `--name=value`, `EZ_NAME` and `--help` are generated from the registry; curated shorthands sit on top | Proposed |
+
+### Naming — [`naming.md`](./naming.md)
+
+| ID | Decision | Status |
+|---|---|---|
+| N-1 | Three shapes: `lower_snake_case` for everything that is not a type or macro, `PascalCase` for types, `UPPER_SNAKE_CASE` for macros and C constants | Proposed |
+| N-2 | Namespace path equals directory path under `src/ez/`; at most `module::sub::detail`; no `using namespace` | Proposed |
+| N-3 | One module name in six places: directory, namespace, target, log category, cvar prefix, memory tag, all checked against the central module table | Proposed |
+| N-4 | Types `PascalCase`; `enum class` with explicit type; acronyms as words; the primitive aliases are the one lowercase exception; `i32` replaces `s32` | Proposed |
+| N-5 | Functions `lower_snake_case`; verbs for actions, nouns for accessors, `set_` for mutators, `is_`/`has_` for predicates; fixed lifecycle verb pairs; no module name inside the identifier | Proposed |
+| N-6 | Public members plain; private members trailing `_`; mutable globals `g_`; `thread_local` `t_`; cvars `cv_`; constants plain; unit suffixes | Proposed |
+| N-7 | Macros `EZ_` and `UPPER_SNAKE_CASE`; feature macros always 0 or 1 with `-Wundef`; no reserved identifiers | Proposed |
+| N-8 | Files `lower_snake_case`; `.hpp` for C++, `.h` for C; platform suffixes `_linux` `_macos` `_windows` `_posix`; tests `<topic>_test.cpp`; `#pragma once`; includes rooted at `src/` | Proposed |
+| N-9 | Registry names: dotted lowercase segments, module first, one separator; memory tags move from `/` to `.` | Proposed |
+| N-10 | The C SDK is a mechanical mapping of the C++ name: `ez_` + path, `EZ_` for constants, no `_t` | Proposed |
+| N-11 | CMake: `ez_<module>` targets with `ez::` aliases, `ez_<verb>` functions, `EZ_` cache variables, upstream names for third-party | Proposed |
+| N-12 | American spelling; a fixed abbreviation list; acronyms as words; positive names | Proposed |
+| N-13 | Enforcement: `clang-tidy` through `clangd` inline and in `check`, compiler warnings, a CMake lint script, `clang-format`; warnings locally, errors in `check` and CI; pinned tool versions | Proposed |
+
 ## Earlier statements these proposals change
 
 | Earlier statement | Where | Changed to |
@@ -84,6 +141,8 @@ Status values: **Proposed** (written up with trade-offs, awaiting confirmation),
 | Custom build type `RelWithTracyProfiler`; a separate `RelWithDebInfo` mode | `philosophy.md` §3.6, `application-architecture.md` §5 | `profile` preset; `release` always produces symbols (B-2, B-3) |
 | Dependencies via CMake `FetchContent` | `application-architecture.md` §5 | Explicit fetch step driven by the manifest (B-7) |
 | Vendor linking "undecided" | `philosophy.md` §6, `application-architecture.md` §9, `plugins.md` §7 | Static (L-1 to L-5) |
+| Synchronous logger writing to the platform console; reversed level enum; fixed 20 KiB format buffer | prototype `src/core/logger/`, `configs.hpp` | Per-thread rings and a log thread, ascending levels matching `EZ_LOG_LEVEL`, runtime line size (LG-3, LG-5, LG-9) |
+| `release` log floor at Warn | `build-system.md` B-3 table, `observability.md` §6, `cmake/modes.cmake`, `docs/build-modes.md` | Info floor and Info runtime default (LG-3), accepted 2026-10-08; the two specs are corrected, the CMake table and how-to page are updated when the logger is implemented |
 
 ## Tooling (implemented 2026-10-05)
 
@@ -115,8 +174,10 @@ Corrections it caused are marked in [`build-system.md`](./build-system.md) (B-14
 
 1. Memory system API (tags, arenas, platform capabilities): everything else allocates through it.
 2. Platform layer, starting with the reference clock.
-3. Instrumentation facade and metrics registry ([`observability.md`](./observability.md)).
+3. Instrumentation facade and metrics registry ([`observability.md`](./observability.md)); the in-app storage design was sketched on 2026-10-08 and is to be written up as the concrete form of O-2.
 4. Game loop, frame pipeline and the render-packet seam.
 5. Audio library choice and the audio thread contract.
 6. Plugin SDK surface; the plugin UI table follows the widget vocabulary (U-8).
 7. Networking and show-output transports.
+8. Errors and crash reporting: exceptions off, status codes, in-process crash handler, assertion tiers (brainstormed 2026-10-08, not yet written up).
+9. Base layer: platform detection, common types, feature macros, the central module table (brainstormed 2026-10-08, not yet written up). Runtime variables are written up in [`cvars.md`](./cvars.md).

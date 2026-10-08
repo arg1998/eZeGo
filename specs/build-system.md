@@ -120,7 +120,7 @@ graph LR
 | Debug info | Full | Full | Full, split into separate symbol files |
 | Frame pointers | Kept | Kept | Kept |
 | Assertions | On | Off | Off |
-| Logging | All levels | Info and above | Warnings and above; debug/trace compiled out |
+| Logging | All levels | Info and above | Info and above; debug/trace compiled out *(was warnings and above; changed 2026-10-08, [`logging.md`](./logging.md) §1.2)* |
 | Always-on metrics | On | On | On |
 | Tracy zones, allocation events | Off | **On** | Compiled out |
 | Catch-all allocation hooks | Off | On | Off |

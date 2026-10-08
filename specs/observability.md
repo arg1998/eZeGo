@@ -218,7 +218,7 @@ The profile build is not "the Tracy build". It is "release code generation, plus
 | `EZ_ASSERTS` | On | Off | Off |
 | `EZ_PROFILER` (Tracy behind the facade) | Off, opt-in | On | Off |
 | `EZ_MEM_TRACE` (allocation events and ring 3) | Off | On | Off |
-| `EZ_LOG_LEVEL` | Trace | Info | Warning |
+| `EZ_LOG_LEVEL` | Trace | Info | Info *(was Warning; changed 2026-10-08, [`logging.md`](./logging.md) §1.2)* |
 
 Source code checks these features, never the mode name.
 
