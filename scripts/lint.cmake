@@ -197,8 +197,8 @@ foreach(_f IN LISTS _sources)
       set(_inc "${CMAKE_MATCH_1}")
       if(_inc MATCHES "\\.\\./|^\\./")
         _report(include-path "includes are rooted at src/, never relative: \"${_inc}\"")
-      elseif(NOT _inc MATCHES "^(ez/|ezego/|support/)")
-        _report(include-path "first-party includes start with ez/ (or ezego/, support/); third-party uses <>: \"${_inc}\"")
+      elseif(NOT _inc MATCHES "^(ez/|ezego/)" AND NOT (_rel MATCHES "^tests/" AND EXISTS "${EZ_ROOT}/tests/${_inc}"))
+        _report(include-path "first-party includes start with ez/ (or ezego/; tests may include files under tests/ by their path there); third-party uses <>: \"${_inc}\"")
       endif()
       # CO-3: another module's detail/ is private.
       if(_inc MATCHES "^ez/([a-z0-9_]+)/detail/" AND NOT CMAKE_MATCH_1 STREQUAL _module)
@@ -256,7 +256,7 @@ foreach(_f IN LISTS _sources)
 
     # N-6, N-9: cvar objects start with cv_; cvar names follow the registry grammar and start
     # with a module from the table.
-    if(_line MATCHES "EZ_CVAR_[A-Z0-9_]+\\([ \t]*([A-Za-z0-9_]+)[ \t]*,[ \t]*\"([^\"]*)\"")
+    if(NOT _line MATCHES "^[ \t]*//" AND _line MATCHES "EZ_CVAR_[A-Z0-9_]+\\([ \t]*([A-Za-z0-9_]+)[ \t]*,[ \t]*\"([^\"]*)\"")
       set(_var "${CMAKE_MATCH_1}")
       set(_cv "${CMAKE_MATCH_2}")
       if(NOT _var MATCHES "^cv_")

@@ -1,6 +1,6 @@
 # eZeGo — Runtime Variables (cvars)
 
-> **Status:** Proposed, 2026-10-08. **Not implemented.** Decisions are *proposed* until confirmed. Decision IDs (`CV-n`) are indexed in [`README.md`](./README.md).
+> **Status:** Accepted and implemented, 2026-10-08 (`src/ez/cvars/`, how-to in [`../docs/cvars.md`](../docs/cvars.md)). Where the implementation settled a detail differently from the text below, §15 says so. Decision IDs (`CV-n`) are indexed in [`README.md`](./README.md).
 > **Companions:** [`logging.md`](./logging.md) (the first consumer; its settings are cvars) · [`observability.md`](./observability.md) (crash and diagnostics reports list non-default cvars) · [`plugins.md`](./plugins.md) §6 · [`linking.md`](./linking.md) L-6 · [`threading-and-timing.md`](./threading-and-timing.md) · [`philosophy.md`](./philosophy.md) §1 (progressive complexity) and §2
 > **Scope:** the single registry of application configuration variables: how a variable is declared, stored, read at zero cost, changed, validated, persisted, and shown to users and developers. Project data is out of scope (§10). Identifier names are tentative until the naming convention is confirmed.
 
@@ -51,15 +51,15 @@ struct CVar {                      // one static object per variable; constant-i
     u8 source;                     // where the current value came from (§6). Written by the registry only.
     u8 locked;                     // set for Startup cvars once init completes (§3).
     const Meta* meta;              // the cold path: name, help, range, default, flags.
-    T get() const { return value.load(std::memory_order_relaxed); }
+    T value() const { return value_.load(std::memory_order_relaxed); }
 };
 ```
 
 | Operation | Cost | Thread |
 |---|---|---|
-| `get()` on a scalar | One load, ~1 ns | Any, including audio and output |
+| `value()` on a scalar | One load, ~1 ns | Any, including audio and output |
 | `generation()` compare | One load and a compare, ~1 ns | Any |
-| `get()` inside an inner loop | Copy to a local before the loop; the compiler will not hoist an atomic load | |
+| `value()` inside an inner loop | Copy to a local before the loop; the compiler will not hoist an atomic load | |
 | Reaching the metadata | One pointer follow; only console, panel, parser and reports do it | Main |
 | Lookup by name | Hash map built at init; microseconds | Main |
 
@@ -239,46 +239,46 @@ Plugins declare cvars through the host table with a C metadata struct that mirro
 
 ```cpp
 // ===== src/ez/hw/cvars.cpp : a module's variables live next to its code =====
-EZ_CVAR_BOOL(hw_watch, "hw.watch", true,
+EZ_CVAR_BOOL(cv_hw_watch, "hw.watch", true,
     { .mutability = Live, .tier = User, .flags = Persist,
       .help = "Watch for devices being plugged in and announce them immediately." });
 
-EZ_CVAR_I32(log_drain_ms, "log.drain_ms", 20,
+EZ_CVAR_I32(cv_log_drain_ms, "log.drain_ms", 20,
     { .min = 1, .max = 1000, .mutability = Live, .tier = Advanced, .flags = Persist,
       .help = "How often the log thread writes queued lines, in milliseconds." });
 
-EZ_CVAR_ENUM(audio_api, "audio.api", AudioApi::Auto, EZ_ENUM_NAMES(AudioApi),
+EZ_CVAR_ENUM(cv_audio_api, "audio.api", AudioApi, AudioApi::Auto, audio_api_names,
     { .mutability = Startup, .tier = Advanced, .flags = Persist,
       .help = "Audio backend. Takes effect after restart." });
 
-EZ_CVAR_BOOL(app_developer, "app.developer", false,
+EZ_CVAR_BOOL(cv_app_developer, "app.developer", false,
     { .mutability = Live, .tier = User, .flags = Persist,
       .help = "Developer mode: shows the console, developer settings and extra diagnostics." });
 
-void register_cvars_hw(cvars::Registry& r) { r.add(hw_watch); /* ... */ }
+void register_cvars(cvars::Registry& r) { r.add(cv_hw_watch); /* ... */ }   // ez::hw::register_cvars
 // Called from the one visible list in application init. Debug builds check every
 // default, range, name and help string here.
 
 // ===== reading, on any thread ================================================
-if (hw_watch.get()) poll_devices();
+if (cv_hw_watch.value()) poll_devices();
 // One relaxed load from a fixed address, ~1 ns. Metadata untouched. Safe on the audio thread.
 
-const i32 drain = log_drain_ms.get();     // copy once; then use the local inside a loop
+const i32 drain = cv_log_drain_ms.value();     // copy once; then use the local inside a loop
 
 // ===== reacting to a change, on the owner's own thread, no callback ===========
-if (audio_api.generation() != seen) {     // one load and a compare per poll
-    restart_audio(audio_api.get());
-    seen = audio_api.generation();
+if (cv_audio_api.generation() != seen) {     // one load and a compare per poll
+    restart_audio(cv_audio_api.value());
+    seen = cv_audio_api.generation();
 }
 
 // ===== setting, from the console or panel ====================================
-cvars::set("log.drain_ms", "50", Source::Console);
+cvars::registry().set("log.drain_ms", "50", Source::Console);
 // Validates against 1..1000. Invalid: rejected, previous value kept, warning shown inline
 // and one Warn log line. Valid: queued; applied at the next frame boundary with an Info
 // line "cvar log.drain_ms: 20 -> 50 (console)", a scenario event, and a debounced save.
 
 // ===== application init ======================================================
-cvars::init(argc, argv);
+cvars::registry().init({.argc = argc, .argv = argv});
 // Parses the settings file, the environment and the command line, in that order. Any
 // invalid known value or malformed line: every error is reported together, to stderr and a
 // native message box, and the process exits. Afterwards Startup cvars are locked.
@@ -329,3 +329,21 @@ Nothing blocks. The naming convention from the foundations discussion applies he
 | `--help` layout and grouping | By module, alphabetical | First use |
 | Registry capacity (1024) and queue capacity (64) | As stated | Measured |
 | Should a `Developer` cvar set from the file apply when developer mode is off? | Yes; tiers control visibility only | Use |
+
+---
+
+## 15. Implementation notes (2026-10-08)
+
+What the first implementation settled, and what it leaves for later.
+
+| Topic | As implemented |
+|---|---|
+| Declaration | `EZ_CVAR_BOOL/I32/I64/F32/F64/ENUM/STRING(cv_name, "module.name", default, {options})` in the owning module's `.cpp`. The enum macro takes the enum type and a `constexpr` array of names in value order; generating names from enumerators needs reflection and is not done. |
+| Storage | `CVar<T>`, `CVarEnum<E>` (stored as `CVar<i32>`), `CVarString` (fixed 255 characters). `Access` is the registry's only door into their internals. |
+| Registry | A class, so tests make isolated ones; `ez::cvars::registry()` is the application's. About 380 KiB of fixed tables, no allocation after construction except in `save()` and `--reset-settings`, which use `std::filesystem`. |
+| Invalid declarations | Reported, and `init()` then refuses to start and lists them with every other error. The spec's "self-checks at registration in debug builds" became this: louder, in every build, and testable. |
+| Locked `Startup` cvars | `set()` on one with `Persist` updates the persisted value and returns `AfterRestart`; without `Persist` it returns `NotSettable`. |
+| Messages | The registry never logs directly (logging depends on cvars, not the reverse). Changes and warnings go to a report hook; until a receiver is installed they are buffered. The logger installs itself there. |
+| `--help` | Written to `InitOptions::help_out` (stdout by default), grouped by module, `Hidden` tier omitted. |
+| Booleans | Accept `true/false`, `on/off`, `yes/no`, `1/0`, case-insensitively. |
+| Not yet done | Main-thread assertion on writes; debounced save on a worker (the application calls `save()` on shutdown); native message box on fail-fast (stderr only, through the caller); plugin cvars; `app.developer` (waits for the `app` module); scenario events; `ShowCritical` behaviour. |

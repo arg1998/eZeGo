@@ -1,0 +1,3 @@
+# Tests inherit every naming rule; only `using namespace` is allowed here (naming.md §3.1).
+InheritParentConfig: true
+Checks: '-google-build-using-namespace'

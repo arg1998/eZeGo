@@ -50,7 +50,7 @@ ez::<module>::detail    implementation that must be in a header but is not API
 | Namespace path equals directory path | `namespace ez::net::artnet` may appear only in files under `src/ez/net/artnet/`. One exception: `src/ez/base/` is namespace `ez` ([`code-organization.md`](./code-organization.md) CO-9). | lint script |
 | Depth | At most three segments below `ez`, which is `module::sub::detail` | lint script |
 | `detail` is private | `ez::<m>::detail` is referenced only from files of module `m` | lint script |
-| No `using namespace` | Anywhere in first-party code, including `.cpp` files. Code lives inside its own namespace block and names siblings unqualified. Tests may `using namespace ez::test`. | `clang-tidy google-build-using-namespace` |
+| No `using namespace` | Anywhere in first-party code, including `.cpp` files. Code lives inside its own namespace block and names siblings unqualified. Tests may use `using namespace` (`tests/.clang-tidy`). | `clang-tidy google-build-using-namespace` |
 | No namespace aliases in headers | | `clang-tidy` |
 | Anonymous namespaces | Only in `.cpp`. In headers, use `detail`. | `clang-tidy misc-anonymous-namespace-in-header`, lint script |
 | Names | Lowercase, one word, short: `net`, `mem`, `log`, `ui`, `hw`. Abbreviations from §12. | `clang-tidy NamespaceCase` |
@@ -179,7 +179,7 @@ Predicates and the verb pairs are guidelines in the sense of §1.5; the shape is
 | Platform-specific sources | Suffix `_linux`, `_macos`, `_windows`, or `_posix` for code shared by Linux and macOS: `clock_linux.cpp`. The suffixes are the preset platform names, selected by CMake (B-9), never by `#ifdef` around a whole file. |
 | Tests | `tests/<module>/<topic>_test.cpp`, mirroring `src/ez/`. Suffix, not prefix, so a test sorts next to its subject. |
 | Include guards | `#pragma once` as the first non-comment line of every header |
-| Include paths | First-party: `#include "ez/log/log.hpp"`, rooted at `src/`, never `../`. System and third-party: angle brackets. |
+| Include paths | First-party: `#include "ez/log/log.hpp"`, rooted at `src/`, never `../`. Tests may also include files under `tests/` rooted there: `"support/subprocess.hpp"`, `"cvars/fixtures.hpp"`. System and third-party: angle brackets. |
 | Include order | Own header, first-party, third-party, system; blank line between groups. Requires `IncludeBlocks: Regroup` and categories in `.clang-format` (today it is `Preserve`). |
 | Generated files | `*.gen.hpp`, only in build trees, never committed |
 

@@ -16,7 +16,7 @@ This folder (`specs/`, formerly `.agent/`) holds the design intent for eZeGo. St
 | [`observability.md`](./observability.md) | Profile build, always-on telemetry, memory tracking | **Proposed 2026-10-04** |
 | [`ui-system.md`](./ui-system.md) | UI API boundary: immediate mode, own vocabulary, widgets / canvas / viewport layers | **Proposed 2026-10-05** |
 | [`logging.md`](./logging.md) | Log API, levels, categories, per-thread rings and log thread, sinks, runtime control, costs | **Proposed 2026-10-08, not implemented** |
-| [`cvars.md`](./cvars.md) | Runtime variables: one registry, zero-cost reads, mutability, validation, persistence, tiers and developer mode, console and panel | **Proposed 2026-10-08, not implemented** |
+| [`cvars.md`](./cvars.md) | Runtime variables: one registry, zero-cost reads, mutability, validation, persistence, tiers and developer mode, console and panel | **Accepted and implemented 2026-10-08** |
 | [`naming.md`](./naming.md) | Naming and namespaces: three shapes, prefixes and suffixes, files, registry names, the C SDK mapping, enforcement by clang-tidy and a lint script | **Accepted and enforced 2026-10-08** |
 | [`code-organization.md`](./code-organization.md) | The repository tree, the inside of a module, the module table, the module inventory, how the tree grows | **Accepted 2026-10-08, being applied** |
 | [`testing.md`](./testing.md) | Every kind of test, the phased rollout, doctest plus small purpose harnesses, the developer contract, fakes, hardware tiers; CI and reference machines deferred | **Accepted 2026-10-08, phase 1 implemented** |
@@ -103,20 +103,20 @@ Status values: **Proposed** (written up with trade-offs, awaiting confirmation),
 
 | ID | Decision | Status |
 |---|---|---|
-| CV-1 | One registry of typed application settings with metadata; command line, environment, file, console, panel, reports and docs are views over it | Proposed |
-| CV-2 | A cvar is a `constinit` static object with its value at offset 0; a read is one relaxed load at a fixed address; metadata is reached from the object only on cold paths | Proposed |
-| CV-3 | Metadata: name with the module as first segment, type, default, range, mutability, tier, flags, mandatory help, aliases | Proposed |
-| CV-4 | Mutability `Const` / `Startup` / `Live`; `Startup` locked after init, editable in the panel as a persisted value marked "after restart" | Proposed |
-| CV-5 | Main thread is the only writer; console and panel writes are queued and applied at the frame boundary; a generation counter per cvar; no callbacks out of the registry | Proposed |
-| CV-6 | Scalars are relaxed atomics readable from any thread; strings are `Startup` or main-thread only | Proposed |
-| CV-7 | Validation: startup errors are collected and fail fast with a readable message and `--reset-settings`; runtime errors are rejected, the previous value kept, a warning shown; unknown names are preserved, not errors | Proposed (policy chosen by Amir 2026-10-08) |
-| CV-8 | Precedence at startup defaults < file < environment < command line; the user wins afterwards; provenance stored per cvar and listed in reports | Proposed |
-| CV-9 | Persist only explicit overrides, flat `name = value` text file per user, atomic debounced write off the frame thread, aliases for renames | Proposed |
-| CV-10 | Tiers `User` / `Advanced` / `Developer` / `Hidden` control visibility only; developer mode is the cvar `app.developer`, off by default, user-enabled | Proposed |
-| CV-11 | Explicit per-module registration; the first name segment must exist in the central module table shared with log categories; self-checks at registration | Proposed |
-| CV-12 | Plugins declare cvars through the host table under `plugin.<id>.`, removed on unload, persisted values retained | Proposed |
-| CV-13 | Application configuration only; project data stays in the project model; a second instance of the engine is the path if project settings need it | Proposed, boundary deferred |
-| CV-14 | `--name=value`, `EZ_NAME` and `--help` are generated from the registry; curated shorthands sit on top | Proposed |
+| CV-1 | One registry of typed application settings with metadata; command line, environment, file, console, panel, reports and docs are views over it | Accepted and implemented 2026-10-08 |
+| CV-2 | A cvar is a `constinit` static object with its value at offset 0; a read is one relaxed load at a fixed address; metadata is reached from the object only on cold paths | Accepted and implemented 2026-10-08 |
+| CV-3 | Metadata: name with the module as first segment, type, default, range, mutability, tier, flags, mandatory help, aliases | Accepted and implemented 2026-10-08 |
+| CV-4 | Mutability `Const` / `Startup` / `Live`; `Startup` locked after init, editable in the panel as a persisted value marked "after restart" | Accepted and implemented 2026-10-08 |
+| CV-5 | Main thread is the only writer; console and panel writes are queued and applied at the frame boundary; a generation counter per cvar; no callbacks out of the registry | Accepted and implemented 2026-10-08 |
+| CV-6 | Scalars are relaxed atomics readable from any thread; strings are `Startup` or main-thread only | Accepted and implemented 2026-10-08 |
+| CV-7 | Validation: startup errors are collected and fail fast with a readable message and `--reset-settings`; runtime errors are rejected, the previous value kept, a warning shown; unknown names are preserved, not errors | Accepted and implemented 2026-10-08 |
+| CV-8 | Precedence at startup defaults < file < environment < command line; the user wins afterwards; provenance stored per cvar and listed in reports | Accepted and implemented 2026-10-08 |
+| CV-9 | Persist only explicit overrides, flat `name = value` text file per user, atomic debounced write off the frame thread, aliases for renames | Accepted and implemented 2026-10-08 |
+| CV-10 | Tiers `User` / `Advanced` / `Developer` / `Hidden` control visibility only; developer mode is the cvar `app.developer`, off by default, user-enabled | Accepted and implemented 2026-10-08 |
+| CV-11 | Explicit per-module registration; the first name segment must exist in the central module table shared with log categories; self-checks at registration | Accepted and implemented 2026-10-08 |
+| CV-12 | Plugins declare cvars through the host table under `plugin.<id>.`, removed on unload, persisted values retained | Accepted and implemented 2026-10-08 |
+| CV-13 | Application configuration only; project data stays in the project model; a second instance of the engine is the path if project settings need it | Accepted 2026-10-08; whether project settings reuse the engine is deferred |
+| CV-14 | `--name=value`, `EZ_NAME` and `--help` are generated from the registry; curated shorthands sit on top | Accepted and implemented 2026-10-08 |
 
 ### Naming — [`naming.md`](./naming.md)
 
