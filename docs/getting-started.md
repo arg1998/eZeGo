@@ -41,6 +41,7 @@ Only for building Tracy from source (not needed with the prebuilt):
 ./ez test               # ctest --preset debug
 ./ez run                # build, then run build/debug/bin/ezego
 ./ez run debug -- --app.quit_after_s=5   # arguments after -- go to the app
+./ez help test                        # each command has a page: presets, options, examples
 ```
 
 The app is a Dear ImGui "Hello, eZeGo" window showing the build mode, platform, compiler and

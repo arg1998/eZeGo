@@ -18,6 +18,7 @@ git clone <repo> && cd eZeGo
 ./ez build      # build the debug preset
 ./ez test       # run the tests
 ./ez run        # run the app
+./ez help       # every command; ./ez help <command> for one in detail
 ```
 
 Windows: `ez.cmd` with the same words. Every command is a thin alias for plain CMake, e.g.

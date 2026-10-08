@@ -1,10 +1,41 @@
 #!/usr/bin/env sh
-# Optional launcher (B-4): short words for the canonical CMake commands. No logic lives here;
-# every line maps one-to-one onto a command you can type yourself.
+# The eZeGo launcher (build-system.md B-4): short words for the canonical CMake commands.
+# Every command is one or two commands you could type yourself; `./ez help <command>` prints them.
+# Help text lives in scripts/help.cmake, shared with ez.cmd on Windows.
 set -e
 cd "$(dirname "$0")"
+
+if ! command -v cmake >/dev/null 2>&1; then
+  echo "ez: cmake was not found. Install it (see docs/getting-started.md), then run ./ez doctor." >&2
+  exit 127
+fi
+
 cmd=${1:-help}
 [ $# -gt 0 ] && shift
+
+commands="doctor init deps tools vscode build run clean test check lint bench profile help"
+known() { case " $commands " in *" $1 "*) return 0 ;; esac; return 1; }
+
+# `ez help [command]`, `ez --help`, and `ez <command> --help|-h` all print the same help.
+case "$cmd" in
+  help|-h|--help)
+    if [ -n "${1:-}" ] && ! known "$1"; then
+      echo "ez: no command '$1'. commands: $commands" >&2; exit 2
+    fi
+    exec cmake -P scripts/help.cmake "$@" ;;
+esac
+case "${1:-}" in
+  -h|--help) known "$cmd" && exec cmake -P scripts/help.cmake "$cmd" ;;
+esac
+
+# A preset argument is optional for build, run and test: `ez test -L unit` means the debug tree.
+take_preset() {
+  preset=debug
+  case "${1:-}" in
+    ""|-*) ;;
+    *) preset=$1 ;;
+  esac
+}
 
 case "$cmd" in
   doctor)  exec cmake -P scripts/doctor.cmake "$@" ;;
@@ -12,32 +43,43 @@ case "$cmd" in
   deps)    exec cmake -P scripts/deps.cmake "$@" ;;
   tools)   exec cmake -P scripts/tools.cmake "$@" ;;
   vscode)  exec cmake -P scripts/vscode.cmake "$@" ;;
-  build)   exec cmake --workflow --preset "${1:-debug}" ;;
-  test)    preset=${1:-debug}; [ $# -gt 0 ] && shift; exec ctest --preset "$preset" "$@" ;;
+
+  build)
+    take_preset "$@"; [ "${1:-}" = "$preset" ] && shift
+    if [ $# -eq 0 ]; then
+      exec cmake --workflow --preset "$preset"
+    fi
+    cmake --preset "$preset" >/dev/null
+    exec cmake --build --preset "$preset" "$@" ;;
+
+  test)
+    take_preset "$@"; [ "${1:-}" = "$preset" ] && shift
+    tree=$preset
+    [ "$preset" = gpu ] && tree=debug          # a test preset on the debug tree
+    cmake --workflow --preset "$tree" >/dev/null   # configure if needed, build; errors still print
+    exec ctest --preset "$preset" "$@" ;;
+
   check)   exec cmake --workflow --preset check ;;
   lint)    exec cmake -P scripts/lint.cmake "$@" ;;
   bench)   exec cmake -P scripts/bench.cmake "$@" ;;
-  run)     preset=${1:-debug}; [ $# -gt 0 ] && shift; exec cmake -P scripts/run.cmake --preset="$preset" -- "$@" ;;
-  profile) exec cmake -P scripts/profile.cmake "$@" ;;
-  clean)   [ -n "$1" ] || { echo "usage: ./ez clean <preset>"; exit 2; }; exec cmake -E rm -rf "build/$1" ;;
-  help|-h|--help)
-    cat <<'EOF'
-usage: ./ez <command> [args]
 
-  doctor                 check this machine and the repo (read-only)
-  init  [--tools=...]    first-time setup: doctor, deps, tools, VS Code, configure debug
-  deps  [--check]        sync third_party/_src to dependencies.json (shallow, pinned)
-  tools [--tools=prebuilt|source|skip] [--force]   install pinned dev tools (Tracy)
-  vscode                 regenerate eZeGo.code-workspace
-  build [preset]         configure + build: debug (default) | profile | release | asan | tsan
-  test  [preset] [ctest args]   e.g. ./ez test debug -L unit
-  check                  pre-merge gate: lint, build with clang-tidy and -Werror, test (build/check)
-  lint  [--fix] [--tidy=off] [--format=off]   naming, layout, formatting and clang-tidy findings
-  bench [--filter=text] [--min-ms=n]   micro-benchmarks from the release tree, with history
-  run   [preset] [app args]     build, then run the app
-  profile [--capture=f.tracy] [-- app args]   build profile, open Tracy, run the app
-  clean <preset>         delete build/<preset>
-EOF
-    ;;
-  *) echo "unknown command '$cmd' (try ./ez help)"; exit 2 ;;
+  run)
+    take_preset "$@"; [ "${1:-}" = "$preset" ] && shift
+    [ "${1:-}" = "--" ] && shift
+    exec cmake -P scripts/run.cmake "--preset=$preset" -- "$@" ;;
+
+  profile) exec cmake -P scripts/profile.cmake "$@" ;;
+
+  clean)
+    case "${1:-}" in
+      "") echo "usage: ./ez clean <preset>|all   (./ez help clean)" >&2; exit 2 ;;
+      all) exec cmake -E rm -rf build ;;
+      *) [ -d "build/$1" ] || { echo "ez: no tree build/$1 (./ez help clean)" >&2; exit 2; }
+         exec cmake -E rm -rf "build/$1" ;;
+    esac ;;
+
+  *)
+    echo "ez: unknown command '$cmd'. commands: $commands" >&2
+    echo "try: ./ez help" >&2
+    exit 2 ;;
 esac

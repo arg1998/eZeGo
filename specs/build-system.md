@@ -153,7 +153,7 @@ CMake has no `cmake run <task>` verb. It offers three mechanisms, and each fits 
 | `cmake --workflow --preset <mode>` | Creates it | Configure and build a mode in one command |
 | `ctest --preset <mode>` | No | Tests |
 
-**Decision.** The canonical commands are plain CMake. A tiny optional launcher `ez` (`ez` for bash, `ez.cmd` for Windows) maps short words onto them one-to-one and holds no logic of its own.
+**Decision.** The canonical commands are plain CMake. An optional launcher `ez` (`ez` for bash, `ez.cmd` for Windows) maps short words onto them. It may chain two canonical commands (`test` builds the tree first), fill in the default preset, and validate its arguments, but it holds no build logic: every command's help prints the canonical commands it runs. *(Revised 2026-10-08: the help text lives in `scripts/help.cmake`, one source for both launchers, with a page per command, the real preset list read from CMake, labels, options and examples.)*
 
 | Intent | Canonical command | With the launcher |
 |---|---|---|
@@ -162,13 +162,18 @@ CMake has no `cmake run <task>` verb. It offers three mechanisms, and each fits 
 | Sync dependencies to the manifest | `cmake -P scripts/deps.cmake` | `./ez deps` |
 | Configure and build a mode | `cmake --workflow --preset profile` | `./ez build profile` |
 | Rebuild only | `cmake --build --preset profile` | `./ez build profile` |
-| Run tests | `ctest --preset debug` | `./ez test` |
+| Run tests | `cmake --build --preset debug` then `ctest --preset debug [options]` | `./ez test [preset] [ctest options]` |
+| The GPU tests | `ctest --preset gpu` | `./ez test gpu` |
+| Pre-merge gate | `cmake --workflow --preset check` | `./ez check` |
+| Lint | `cmake -P scripts/lint.cmake` | `./ez lint [--fix]` |
+| Benchmarks | `cmake -P scripts/bench.cmake` | `./ez bench` |
 | Run the app | `build/<mode>/bin/ezego` | `./ez run profile` |
 | Profiling session | (three steps by hand) | `./ez profile`: build `profile`, start the Tracy GUI, launch the app |
 | Install dev tools | `cmake -P scripts/tools.cmake` | `./ez tools` |
-| Remove a mode's tree | delete `build/<mode>/` | `./ez clean profile` |
+| Remove a mode's tree | delete `build/<mode>/` | `./ez clean profile`, `./ez clean all` |
+| Help | `cmake -P scripts/help.cmake [command]` | `./ez help [command]`, `./ez <command> --help` |
 
-**Why a launcher at all.** `cmake -P scripts/doctor.cmake` is correct but not memorable. The launcher is the same pattern as `gradlew`: a few lines, checked in, zero prerequisites beyond CMake.
+**Why a launcher at all.** `cmake -P scripts/doctor.cmake` is correct but not memorable. The launcher is the same pattern as `gradlew`: checked in, zero prerequisites beyond CMake, and its help is the first thing a newcomer reads, so it carries the explanations the canonical commands cannot.
 
 **Cost.** One more thing in the repo root. It is optional by construction: CI and editors call the canonical commands.
 
