@@ -37,7 +37,7 @@ resolves to exactly the pinned commit. A moved tag can never slip in silently.
 ## How a dependency is built
 
 `third_party/<name>.cmake` is our build description (B-8): which sources, which options, warnings
-off, `-O2` even in debug. GLFW and Tracy go through their own CMake with our options; ImGui is
+off, `-O2` even in debug. SDL3 and Tracy go through their own CMake with our options; ImGui is
 compiled from a source list we own.
 
 ## Adding a dependency
@@ -49,4 +49,12 @@ compiled from a source list we own.
 
 ## Patches
 
-Last resort. Put `*.patch` files in `third_party/patches/<name>/`; `deps` applies them in order.
+Last resort. Put `*.patch` files in `third_party/patches/<name>/`; `deps` applies them in order when it
+fetches, and lists them under `patches` in the manifest entry with the reason. To change a patch,
+edit the checkout and regenerate the file with `git -C third_party/_src/<name> diff`.
+
+Current patches:
+
+| Dependency | Patch | Why |
+|---|---|---|
+| sdl3 | `0001-hit-test-at-press.patch` | Double-click on the title bar under X11 and Wayland ([`specs/windowing.md`](../specs/windowing.md) §4) |

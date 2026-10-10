@@ -21,6 +21,7 @@ This folder (`specs/`, formerly `.agent/`) holds the design intent for eZeGo. St
 | [`code-organization.md`](./code-organization.md) | The repository tree, the inside of a module, the module table, the module inventory, how the tree grows | **Accepted 2026-10-08, being applied** |
 | [`testing.md`](./testing.md) | Every kind of test, the phased rollout, doctest plus small purpose harnesses, the developer contract, fakes, hardware tiers; CI and reference machines deferred | **Accepted 2026-10-08, phases 1 and 4 implemented** |
 | [`base.md`](./base.md) | The base layer: detection, types, macros, assertion seam, fixed string, stable hash, module enum | **Accepted and implemented 2026-10-08** |
+| [`windowing.md`](./windowing.md) | Native windows over SDL3, the custom chrome, the window / render / ui module split and the frame handoff, docking and overlay rules, extra windows, layout persistence, taskbar and displays | **Proposed 2026-10-09**; the SDL3 swap and the custom title bar implemented in the placeholder shell |
 
 ## Decision register
 
@@ -179,6 +180,24 @@ Status values: **Proposed** (written up with trade-offs, awaiting confirmation),
 | T-12 | Hardware in four tiers: software twins beside each module, a virtual rig, firmware on the host, real devices that skip when absent | Accepted 2026-10-08 |
 | T-13 | CI, the performance reference machine and the hardware bench machine are deferred; the plan is recorded, nothing is built | Accepted 2026-10-08 |
 
+### Windowing — [`windowing.md`](./windowing.md)
+
+| ID | Decision | Status |
+|---|---|---|
+| W-1 | SDL3 replaces GLFW; only the `window` module sees it | Proposed 2026-10-09; SDL3 implemented in the placeholder shell, the `window` module not built |
+| W-2 | Every window is borderless with eZeGo's own chrome on all three platforms; the OS keeps move, snap and resize through its hit-test channel; `window.os_decorations` is a debugging fallback | Proposed 2026-10-09; the title bar implemented in the placeholder shell, menus and `window.os_decorations` not built |
+| W-3 | One library per module: SDL3 in `window`, the GPU in `render`, ImGui in `ui`; `app` decides which windows exist | Proposed 2026-10-09, not built |
+| W-4 | Input becomes POD events at the window boundary; `ui` feeds ImGui from them; no upstream platform backend | Proposed 2026-10-09, not built; the shell uses ImGui's SDL3 backend |
+| W-5 | The UI reaches the GPU as a POD packet drawn by `render`; no upstream renderer backend | Proposed 2026-10-09, not built; the shell uses ImGui's OpenGL 3 backend |
+| W-6 | Native windows are created by `app` through `window`; one ImGui context per window; multi-viewport off | Proposed 2026-10-09; multi-viewport turned off, the rest not built |
+| W-7 | Panels dock and never float: snap back on release outside a dock target | Proposed 2026-10-09, not built |
+| W-8 | Overlays float and never dock: palette, modals, toasts | Proposed 2026-10-09, not built |
+| W-9 | Layout is per-user, per-role view state: geometry, dock tree, panel visibility; default is code; reset; stable ids; versioned; never a cvar, never undoable | Proposed 2026-10-09, not built |
+| W-10 | Fullscreen is borderless on one display, never exclusive; restore clamps onto an existing display | Proposed 2026-10-09; the fullscreen button is borderless, the choice of display not built |
+| W-11 | Main thread only; no window operation may disturb the show output; the hit test is allocation-free | Proposed 2026-10-09 |
+| W-12 | Taskbar and dock integration through `window`: attention, progress, title, icon | Proposed 2026-10-09, icon deferred |
+| W-13 | Known costs recorded: accessibility, macOS menu bar, Wayland shadow, double-click on the caption | Proposed 2026-10-09 |
+
 ## Earlier statements these proposals change
 
 | Earlier statement | Where | Changed to |
@@ -193,6 +212,8 @@ Status values: **Proposed** (written up with trade-offs, awaiting confirmation),
 | C++17 "current", C++20 "open" | `philosophy.md` §6, `application-architecture.md` §4 and §9 | C++20 (B-16) |
 | GCC "hard-errored" | `philosophy.md` §6, `application-architecture.md` §9, `base.md` | Unsupported but unblocked: the toolchain gates, detection never does (B-11, BA-3) |
 | Testing frameworks "open" | `philosophy.md` §6, `application-architecture.md` §8 and §9, `build-system.md` B-12 and §6 | doctest plus small purpose harnesses (T-1); the test kinds and labels in T-2 extend B-12's list |
+| Custom window chrome an explicit non-goal; OS-native frames first | [`philosophy.md`](./philosophy.md) §5 | Custom chrome on every platform from the first window ([`windowing.md`](./windowing.md) W-2) |
+| Windowing over GLFW; "custom chrome or an SDL3 swap is a one-module change" | [`application-architecture.md`](./application-architecture.md) §4, [`code-organization.md`](./code-organization.md) §4, `dependencies.json` | SDL3 3.4.18 (W-1), in the app's placeholder shell until the `window` module is built; ImGui's multi-viewport off (W-6) |
 
 ## Tooling (implemented 2026-10-05)
 
@@ -231,4 +252,4 @@ Corrections it caused are marked in [`build-system.md`](./build-system.md) (B-14
 7. Networking and show-output transports.
 8. Errors and crash reporting: exceptions off, status codes, in-process crash handler, assertion tiers (brainstormed 2026-10-08, not yet written up).
 9. Platform module: clock, paths, threads, process; the logger, cvars and app carry stubs for these until it exists.
-10. Window, render and ui modules, which replace the placeholder shell in `app`.
+10. Window, render and ui modules, which replace the placeholder shell in `app`. Designed in [`windowing.md`](./windowing.md) §3 on 2026-10-09; not built.

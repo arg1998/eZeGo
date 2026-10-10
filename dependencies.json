@@ -12,19 +12,22 @@
       "used_by": [
         "app"
       ],
-      "why": "Immediate-mode UI with docking and multi-viewport"
+      "why": "Immediate-mode UI with docking; multi-viewport off (windowing.md W-6)"
     },
     {
-      "name": "glfw",
-      "version": "3.4",
-      "url": "https://github.com/glfw/glfw.git",
-      "ref": "3.4",
-      "commit": "7b6aead9fb88b3623e3b3725ebb42670cbe4c579",
+      "name": "sdl3",
+      "version": "3.4.18",
+      "url": "https://github.com/libsdl-org/SDL.git",
+      "ref": "release-3.4.18",
+      "commit": "829a65d769d935c4852f8159e964312c0957260a",
       "license": "Zlib",
       "used_by": [
         "app"
       ],
-      "why": "Native windows, input, GL context; custom allocator hook (glfwInitAllocator)"
+      "why": "Native windows, input, the OpenGL context, and the hit test behind the custom title bar; one library for Windows, macOS, X11 and Wayland (windowing.md W-1)",
+      "patches": [
+        "third_party/patches/sdl3/0001-hit-test-at-press.patch: X11 and Wayland ask the hit test again at the press, and Wayland reports the press as a hit-test event as X11 does; together they let a double-click on the title bar maximize without starting a move (windowing.md \u00a74)"
+      ]
     },
     {
       "name": "doctest",

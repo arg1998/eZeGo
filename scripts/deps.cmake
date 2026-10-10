@@ -1,6 +1,6 @@
 # Sync third_party/_src/ to dependencies.json (B-7).
 #
-#   cmake -P scripts/deps.cmake [--only=imgui,glfw] [--force] [--check]
+#   cmake -P scripts/deps.cmake [--only=imgui,sdl3] [--force] [--check]
 #
 # Each dependency is a shallow git checkout of exactly the pinned commit: no history.
 # --check   report only, change nothing (exit 1 if anything is out of date)

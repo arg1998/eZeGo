@@ -1,7 +1,7 @@
 # eZeGo — UI System
 
 > **Status:** Proposal, 2026-10-05. Decisions are *proposed* until confirmed. Decision IDs (`U-n`) are indexed in [`README.md`](./README.md).
-> **Companions:** [`application-architecture.md`](./application-architecture.md) · [`plugins.md`](./plugins.md) · [`linking.md`](./linking.md) §6 · [`build-system.md`](./build-system.md) B-9
+> **Companions:** [`windowing.md`](./windowing.md) · [`application-architecture.md`](./application-architecture.md) · [`plugins.md`](./plugins.md) · [`linking.md`](./linking.md) §6 · [`build-system.md`](./build-system.md) B-9
 > **Scope:** the boundary between the application (and plugins) and the UI implementation. The widget vocabulary itself is **not** designed here: it waits for the UX designs (U-8).
 
 ---
@@ -63,6 +63,7 @@ This is where "high-level API, low-level implementation" lands: `viewport(scene,
 - **Main thread only.** Every UI call happens on the display thread. Viewport GPU work goes through the render-packet seam like any other rendering.
 - **Data-describable where cheap (U-5).** A panel whose structure can be stated as data gets themes and layouts as files, plugin panels declared rather than drawn, and automated UI tests. This is a property of the high-level API, not a second framework.
 - **The escape hatch is visible.** `ui_native` use is grep-able and reviewed; a screen cannot be called stable while it uses it.
+- **The window side is specified in [`windowing.md`](./windowing.md).** The chrome (W-2), one ImGui context per native window with multi-viewport off (W-6), the docking and overlay rules (W-7, W-8) and layout persistence (W-9) live there. This module reaches the window through POD events (W-4) and the GPU through a POD draw packet (W-5); it never includes SDL or OpenGL.
 
 ---
 

@@ -1,0 +1,34 @@
+diff --git a/src/video/wayland/SDL_waylandevents.c b/src/video/wayland/SDL_waylandevents.c
+index c779a63..e32b9d3 100644
+--- a/src/video/wayland/SDL_waylandevents.c
++++ b/src/video/wayland/SDL_waylandevents.c
+@@ -901,6 +901,9 @@ static bool Wayland_ProcessHitTest(SDL_WaylandSeat *seat, Uint32 serial)
+     SDL_Window *window = window_data->sdlwindow;
+ 
+     if (window->hit_test) {
++        // Ask again at the press: the answer at the last motion may be stale (the app may decline a move).
++        window_data->hit_test_result = window->hit_test(window, &seat->pointer.last_motion, window->hit_test_data);
++
+         static const uint32_t directions[] = {
+             XDG_TOPLEVEL_RESIZE_EDGE_TOP_LEFT, XDG_TOPLEVEL_RESIZE_EDGE_TOP,
+             XDG_TOPLEVEL_RESIZE_EDGE_TOP_RIGHT, XDG_TOPLEVEL_RESIZE_EDGE_RIGHT,
+@@ -1004,6 +1007,7 @@ static void pointer_handle_button_common(SDL_WaylandSeat *seat, uint32_t serial,
+             seat->pointer.buttons_pressed |= SDL_BUTTON_MASK(sdl_button);
+ 
+             if (sdl_button == SDL_BUTTON_LEFT && Wayland_ProcessHitTest(seat, seat->last_implicit_grab_serial)) {
++                SDL_SendWindowEvent(window->sdlwindow, SDL_EVENT_WINDOW_HIT_TEST, 0, 0); // as X11 does: lets the app see caption double-clicks
+                 return; // don't pass this event on to app.
+             }
+         } else {
+diff --git a/src/video/x11/SDL_x11events.c b/src/video/x11/SDL_x11events.c
+index 35d9c10..73e3558 100644
+--- a/src/video/x11/SDL_x11events.c
++++ b/src/video/x11/SDL_x11events.c
+@@ -739,6 +739,7 @@ bool X11_TriggerHitTestAction(SDL_VideoDevice *_this, SDL_WindowData *data, cons
+ 
+     if (window->hit_test) {
+         const SDL_Point point = { (int)x, (int)y };
++        X11_ProcessHitTest(_this, data, x, y, false); // ask again at the press: the last motion's answer may be stale
+         static const int directions[] = {
+             _NET_WM_MOVERESIZE_SIZE_TOPLEFT, _NET_WM_MOVERESIZE_SIZE_TOP,
+             _NET_WM_MOVERESIZE_SIZE_TOPRIGHT, _NET_WM_MOVERESIZE_SIZE_RIGHT,

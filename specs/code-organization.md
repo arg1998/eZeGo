@@ -92,16 +92,16 @@ The prototype's `src/core/` and `src/application/` were removed on 2026-10-08; w
 | 1 | `state` | Handle and POD pools, commands and undo | false |
 | 1 | `timebase` | Transport and show-time over the reference clock | false |
 | 1 | `serialize` | Project and settings formats | false |
-| 2 | `render` | GPU backend behind a seam; the render packet consumer | false |
-| 2 | `window` | Windows, displays, input, through GLFW | false |
+| 2 | `render` | GPU backend behind a seam; the render packet consumer | false; the UI draw path is designed in [`windowing.md`](./windowing.md) §3 |
+| 2 | `window` | Native windows, displays, input events, the hit test for the chrome, the GL surface, through SDL3 | true, [`windowing.md`](./windowing.md) |
 | 2 | `audio` | Playback and analysis on the audio thread | false |
 | 2 | `net` | Transports: Art-Net, sACN, general UDP | false |
 | 2 | `hw` | Hardware service layer: discovery, capabilities, flashing, streaming | false |
-| 2 | `ui` | The UI system in eZeGo's own vocabulary | true, [`ui-system.md`](./ui-system.md) |
+| 2 | `ui` | The UI system in eZeGo's own vocabulary | true, [`ui-system.md`](./ui-system.md), [`windowing.md`](./windowing.md) |
 | 3 | `plugin` | Host side: loader, registry, the host table | true, [`plugins.md`](./plugins.md) |
 | 3 | `nodes` | The node-graph runtime | false |
 | 3 | `lighting` | The lighting domain | false |
-| 3 | `app` | Wiring, screens, the application object. Today: the main loop, the app cvars, and the placeholder shell | false; exists as a placeholder (§3) |
+| 3 | `app` | Wiring, screens, the application object. Today: the main loop, the app cvars, and the placeholder shell: one SDL3 window with eZeGo's title bar, and Dear ImGui | false; exists as a placeholder (§3) |
 
 ---
 

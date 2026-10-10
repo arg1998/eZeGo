@@ -2,7 +2,7 @@
 
 > [!CAUTION]
 > Early development. The foundations (build system, core, platform layer) are being built;
-> the application itself is currently a Dear ImGui "hello world".
+> the application itself is currently one window with eZeGo's own title bar and a Dear ImGui "hello world" panel.
 
 eZeGo is a high-performance, low-latency show-control and visualization application for stage
 lighting and other show machines (fog, lasers, motors), driving physical fixtures in a venue or

@@ -17,7 +17,7 @@ include(cmake/editor.cmake)
 include(cmake/testing.cmake)
 
 # ------------------------------------------------------------------ third party (B-8)
-include(third_party/glfw.cmake)
+include(third_party/sdl3.cmake)
 include(third_party/imgui.cmake)
 include(third_party/tracy.cmake)
 include(third_party/doctest.cmake)

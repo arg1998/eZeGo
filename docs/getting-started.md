@@ -9,7 +9,7 @@ git clone <repo> && cd eZeGo
 
 `init` does, in order, and is safe to re-run:
 
-1. **doctor (system part)**: checks the compiler, Ninja, CMake, git and the OS packages GLFW needs.
+1. **doctor (system part)**: checks the compiler, Ninja, CMake, git and the OS packages SDL3 needs.
    It installs nothing. Every problem comes with the exact install command for your OS.
 2. **deps**: shallow-fetches each library in `dependencies.json` at its pinned commit into
    `third_party/_src/` (a few seconds, no history).
@@ -44,8 +44,8 @@ Only for building Tracy from source (not needed with the prebuilt):
 ./ez help test                        # each command has a page: presets, options, examples
 ```
 
-The app is a Dear ImGui "Hello, eZeGo" window showing the build mode, platform, compiler and
-frame time. `ezego --version` prints the version without opening a window.
+The app is one window with eZeGo's own title bar (no OS frame; the OS still moves, snaps and
+resizes it) and a Dear ImGui panel showing the build mode, platform, compiler and frame time. `ezego --version` prints the version without opening a window.
 
 ## 3. Check everything at any time
 

@@ -1,5 +1,5 @@
 # Tests are part of the main project (B-12, specs/testing.md). They link headless modules only:
-# nothing here can see GLFW, ImGui or a GPU. One executable per module (ez_test, cmake/testing.cmake),
+# nothing here can see SDL3, ImGui or a GPU. One executable per module (ez_test, cmake/testing.cmake),
 # one CTest test per doctest case. Labels: unit, integration, smoke, lint; gpu is excluded by the
 # test presets and runs on demand with `ctest --preset gpu` (./ez test gpu).
 

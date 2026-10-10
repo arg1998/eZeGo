@@ -114,7 +114,7 @@ These are deliberately *out of scope now* to keep us honest; each has a deferred
 
 - **Photorealistic 3D.** We want low-poly geometry with *good* lights/shadows — "close enough to reality," not a renderer arms race.
 - **Scripting languages (TypeScript/Python).** The node-graph "blueprint" editor covers user-authored logic for now; embedded scripting is a later tier.
-- **Custom window chrome.** We ship with OS-native title bars/frames now; custom chrome is a contained, later change behind the windowing seam.
+- ~~**Custom window chrome.** We ship with OS-native title bars/frames now; custom chrome is a contained, later change behind the windowing seam.~~ *Superseded 2026-10-09:* custom chrome ships from the first window on every platform ([`windowing.md`](./windowing.md) W-2), and SDL3 replaced GLFW (W-1).
 - **Full master-clock transport & external sync** (SMPTE/MTC/MIDI-clock/Ableton Link). We build the **monotonic reference clock now** and a *thin* timebase seam; the pluggable external sources come later.
 - **A second graphics backend (Vulkan/DirectX).** OpenGL 4.1 now; the backend stays behind a seam so a swap is possible if/when the API becomes the bottleneck.
 

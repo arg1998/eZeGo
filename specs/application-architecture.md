@@ -136,7 +136,7 @@ Everything OS-specific sits behind a **capability-based** interface that *exploi
 | **Entry** | A plain `main()` in `src/apps/<name>/main.cpp` that wires modules ([`code-organization.md`](./code-organization.md) CO-6); `WinMain` and app-bundle entries come with packaging | Present |
 | **Memory** | platform alloc / aligned alloc → memory system | Thin wrappers today; expands with use |
 | **Clock** | monotonic, ns-resolution reference clock | **Does not exist yet; the platform module is the next foundation task.** The logger and cvars carry stubs. |
-| **Windowing** | `Window`/`Display` over **GLFW** | OS-native frames/title bars; multi-window, multi-monitor, DPI. *Nothing else in the app talks to GLFW directly* — so custom chrome or an SDL3 swap is a one-module change |
+| **Windowing** | **SDL3**, behind the `window` module once it is built; today in the app's placeholder shell | Borderless windows with eZeGo's own chrome; native move, snap and resize through the OS hit-test channel; multi-window, multi-monitor, DPI. *Only the window module will talk to SDL; until it exists, only the placeholder shell does.* Design: [`windowing.md`](./windowing.md) *(proposed 2026-10-09)* |
 | **Filesystem** | abstracted; **all paths normalized to unix form** | Windows paths translated/handled like Linux; home/temp/config/system locations normalized |
 | **Hardware comms** | USB / WiFi / Bluetooth transports | Higher protocols (e.g. MIDI) built atop these; see §6 |
 | **Console / logging sink** | per-OS | ANSI on Linux/mac, console API on Windows |
@@ -171,14 +171,14 @@ graph TD
 - **Dependency manifest** — one human-readable file lists every dependency with name, version, source URL, tag/branch and **pinned commit**. The tag or branch is recorded for humans; **the commit is what the build pins** (reproducibility is incompatible with tracking a moving branch). Fetched by an explicit step (`init` / `deps`); configure and build never touch the network. *No git submodules.*
 - **Developer commands** are plain CMake (`cmake -P scripts/<task>.cmake`, `cmake --workflow --preset <mode>`, `ctest --preset <mode>`) with an optional `ez` launcher. OS-specific work lives in `scripts/linux`, `scripts/macos`, `scripts/windows`; commands unsupported on a platform fail clearly.
 - **Build modes** are presets, each with its own build tree, so switching never requires clearing a cache: *debug* (assertions, logging), *profile* (release code generation plus Tracy zones, frame marks and memory instrumentation; **no global `malloc` hook outside this mode** — see [`observability.md`](./observability.md) §4), *release* (optimized, debug/trace logging compiled out).
-- **Dependencies** are listed in `dependencies.json` (today: Dear ImGui, GLFW, doctest, Tracy). RtMidi, nlohmann/json, function2 and IconFontCppHeaders from the prototype return when the modules that need them are designed; Boost is gone.
+- **Dependencies** are listed in `dependencies.json` (today: Dear ImGui, SDL3, doctest, Tracy). RtMidi, nlohmann/json, function2 and IconFontCppHeaders from the prototype return when the modules that need them are designed; Boost is gone.
 - **Linking: static** for everything built from source. Only OS, GPU, windowing and audio interfaces stay dynamic; plugins are the one first-class dynamic boundary, with isolation rules for symbol visibility and duplicated state. See [`linking.md`](./linking.md).
 
 ---
 
 ## 6. Capabilities (Layer 2)
 
-- **Rendering** — OpenGL 4.1 core + ImGui (docking, viewports) today. Kept behind a backend seam so DirectX/Vulkan is swappable *if* the graphics API ever becomes the measured bottleneck. The in-app low-poly 3D stage designer and 2D/shader visualizations render here (GPU-bound, parallel to CPU).
+- **Rendering** — OpenGL 4.1 core + ImGui (docking; multi-viewport off, [`windowing.md`](./windowing.md) W-6) today. Kept behind a backend seam so DirectX/Vulkan is swappable *if* the graphics API ever becomes the measured bottleneck. The in-app low-poly 3D stage designer and 2D/shader visualizations render here (GPU-bound, parallel to CPU).
 - **Audio** — playback + real-time analysis (FFT/beat/levels) on the audio thread. Library choice (**RtAudio** — sibling of vendored RtMidi — vs **miniaudio**) is open.
 - **Networking** — fast, non-blocking, multi-protocol (Art-Net/sACN and general transport). Stack is open; leaning a minimal UDP layer over Boost.Asio.
 - **Hardware service layer** — the integration tier between the abstract engine and physical devices. The **core knows only abstract, capability-tagged outputs**; the service layer owns device **discovery**, **capability negotiation**, **vendor-SDK orchestration** (e.g. `arduino-cli`, `esptool` as subprocess + filesystem + network work → worker pool), **compatibility checks**, and **firmware build/flash pipelines**. Each device class is effectively a **driver descriptor**: `{ discover, capabilities, build+flash, stream }`. This is also a natural plugin seam ("device packs" — see [`plugins.md`](./plugins.md) §4).

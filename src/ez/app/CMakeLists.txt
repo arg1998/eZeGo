@@ -1,5 +1,5 @@
 # ez::app — layer 3. The main loop and, for now, the placeholder shell: the only module that sees
-# GLFW and Dear ImGui until the window, render and ui modules exist.
+# SDL3 and Dear ImGui until the window, render and ui modules exist (windowing.md §3).
 set(_paths_posix detail/paths_posix.cpp)
 set(_paths_windows detail/paths_windows.cpp)
 if(WIN32)
@@ -11,5 +11,6 @@ endif()
 ez_module(app
   SOURCES
     app.hpp app.cpp app_cvars.cpp
-    detail/settings.hpp detail/shell.hpp detail/shell.cpp detail/paths.hpp ${_paths}
-  PRIVATE_DEPS imgui glfw)
+    detail/settings.hpp detail/shell.hpp detail/shell.cpp detail/chrome.hpp detail/chrome.cpp
+    detail/paths.hpp ${_paths}
+  PRIVATE_DEPS imgui sdl3)

@@ -39,19 +39,21 @@ check() {
   fi
 }
 
-# ---------------------------------------------------------------- app build (GLFW: X11 + Wayland)
-check ERROR "X11 headers (GLFW)" "x11 xrandr xinerama xcursor xi" \
-  "libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev" \
-  "libX11-devel libXrandr-devel libXinerama-devel libXcursor-devel libXi-devel" \
-  "libx11 libxrandr libxinerama libxcursor libxi"
-check ERROR "Wayland headers (GLFW)" "wayland-client wayland-cursor wayland-egl xkbcommon wayland-protocols" \
-  "libwayland-dev libxkbcommon-dev wayland-protocols" \
-  "wayland-devel libxkbcommon-devel wayland-protocols-devel" \
-  "wayland libxkbcommon wayland-protocols"
+# ---------------------------------------------------------------- app build (SDL3: X11 + Wayland)
+# SDL stops its configure when one of these is missing (third_party/sdl3.cmake lists the X11
+# extensions that are off). It loads the libraries at runtime; the headers are for the build.
+check ERROR "X11 headers (SDL3)" "x11 xext xcursor xi xfixes xrandr" \
+  "libx11-dev libxext-dev libxcursor-dev libxi-dev libxfixes-dev libxrandr-dev" \
+  "libX11-devel libXext-devel libXcursor-devel libXi-devel libXfixes-devel libXrandr-devel" \
+  "libx11 libxext libxcursor libxi libxfixes libxrandr"
+check ERROR "Wayland headers (SDL3)" "wayland-client wayland-cursor wayland-egl egl xkbcommon" \
+  "libwayland-dev libxkbcommon-dev libegl-dev" \
+  "wayland-devel libxkbcommon-devel libglvnd-devel" \
+  "wayland libxkbcommon libglvnd"
 if command -v wayland-scanner >/dev/null 2>&1; then
   echo "OK|wayland-scanner|$(command -v wayland-scanner)|"
 else
-  echo "ERROR|wayland-scanner|not found (GLFW generates Wayland protocol code)|$INSTALL $(pkg libwayland-bin wayland-devel wayland)"
+  echo "ERROR|wayland-scanner|not found (SDL3 generates Wayland protocol code)|$INSTALL $(pkg libwayland-bin wayland-devel wayland)"
 fi
 
 # ---------------------------------------------------------------- tool source builds (warnings)
