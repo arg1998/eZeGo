@@ -1,0 +1,8 @@
+# Installed by `bun run setup`
+/.emsdk/
+/.deps/
+/node_modules/
+
+# Build output
+/build/
+/dist/

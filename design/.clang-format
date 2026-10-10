@@ -1,0 +1,19 @@
+# The same layout as the app's code, so design code can move into the app without reformatting.
+# This file replaces the repository's .clang-format for files under design/.
+BasedOnStyle: Google
+ColumnLimit: 120
+IndentWidth: 4
+AccessModifierOffset: -4
+AllowShortFunctionsOnASingleLine: Inline
+DerivePointerAlignment: false
+IndentPPDirectives: BeforeHash
+PointerAlignment: Left
+# Include order: own header, design headers, third-party, standard library; one blank line between.
+IncludeBlocks: Regroup
+IncludeCategories:
+  - Regex: '^"'
+    Priority: 2
+  - Regex: '^<[a-z_0-9]+>$'
+    Priority: 4
+  - Regex: '^<'
+    Priority: 3

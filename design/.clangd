@@ -1,0 +1,15 @@
+# clangd for the design sandbox: its own compile database (written by the first `bun run dev`) and
+# Emscripten's headers. This file takes precedence over the repository's .clangd under design/.
+CompileFlags:
+  CompilationDatabase: build/debug
+  # Relative to build/debug, where the compile commands run.
+  Add:
+    - --target=wasm32-unknown-emscripten
+    - --sysroot=../../.emsdk/upstream/emscripten/cache/sysroot
+    - -isystem../../.emsdk/upstream/emscripten/cache/sysroot/include/compat
+---
+# Third-party sources are not ours to lint.
+If:
+  PathMatch: \.deps/.*
+Diagnostics:
+  Suppress: "*"

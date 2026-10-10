@@ -1,0 +1,14 @@
+{
+  // Used when design/ is opened as its own VS Code window. Emscripten's own clangd understands its
+  // newer standard library; the system clangd does not.
+  "clangd.path": "${workspaceFolder}/.emsdk/upstream/bin/clangd",
+  "clangd.arguments": ["--header-insertion=never", "--background-index"],
+  "C_Cpp.intelliSenseEngine": "disabled",
+  "[cpp]": { "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd", "editor.formatOnSave": true },
+
+  // The build goes through `bun run dev`, not the CMake extension.
+  "cmake.configureOnOpen": false,
+
+  "search.exclude": { ".emsdk": true, ".deps": true, "build": true, "dist": true, "node_modules": true },
+  "files.watcherExclude": { "**/.emsdk/**": true, "**/.deps/**": true, "**/build/**": true, "**/node_modules/**": true }
+}
